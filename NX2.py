@@ -64,6 +64,7 @@ def sec2hms(sec):
 
 # import NX2
 # dat = NX2.NX2Table('../data/18tue_firstday.00.csv', (18,5,2009))
+# dat = NX2.NX2Table('../2008/080424eleventhday_sail.00.csv', (24,4,2008))
 class NX2Table(atpy.Table):
   
     def __init__(self, *args, **kwargs):
@@ -91,13 +92,14 @@ class NX2Table(atpy.Table):
 
     def plot_course(self, scale = 50, n = 300):
         plt.clf()
-        plt.plot(self.x, self.y)
+        plt.plot(self.x, self.y,'k')
         # overplot path with saling in blue
         if 'sailing' in self.keys():
             # make groups of indices with the sail up
             for sail, ind in itertools.groupby(range(len(self)),key = lambda a:self.sailing[a]):
                 if sail ==1 :
-                  plt.plot(self.x[ind], self.y[ind],'b')
+                  index = list(ind)
+                  plt.plot(self.x[index], self.y[index],'b')
         wind_v = self.TWS / mps2knots
         wind_ang = self.AWA + self.HDC + 180.
         quiver_wind = plt.quiver(self.x[::n],self.y[::n], self.TWS[::n]*np.sin(wind_ang[::n]/180.*np.pi), self.TWS[::n]*np.cos(wind_ang[::n]/180.*np.pi), scale = scale, color= 'g')
@@ -109,7 +111,7 @@ class NX2Table(atpy.Table):
             qk_scale = scale/20.
         qk_wind = plt.quiverkey(quiver_wind, .1, 0.95, qk_scale, 'Wind', labelpos='E')
         qk_bsp = plt.quiverkey(quiver_bsp, .1, 0.9, qk_scale, 'Bewegung gegen Wasser', labelpos='E')
-        qk_sog = plt.quiverkey(quiver_sog, .1, 0.85, qk_scale, 'Bewegung über Grund', labelpos='E')
+        qk_sog = plt.quiverkey(quiver_sog, .1, 0.85, qk_scale, u'Bewegung über Grund', labelpos='E')
   
     def plot_speeds(self, t1=(0,0,0),t2=(23,59,59)):
         fig = plt.figure()
@@ -118,7 +120,7 @@ class NX2Table(atpy.Table):
         ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M', tz=None))
         #plt.subplots_adjust(left=0.075, right=0.95, top=0.9, bottom=0.25)
 
-        ind = np.where(self.time >= datetime.time(*t1)) & np.where(self.time <= datetime.time(*t2))
+        ind = (self.time >= datetime.time(*t1)) & (self.time <= datetime.time(*t2))
 
         sog = ax.plot(self.datetime[ind], self.SOG[ind], label='SOG')
         bsp = ax.plot(self.datetime[ind], self.BSP[ind], label='BSP')
@@ -129,14 +131,16 @@ class NX2Table(atpy.Table):
             ax2 = ax.twinx()
             index = self.minutes_index() & ind
             minutes = np.array(map(lambda x: x.replace(second = 0, microsecond=0),self.datetime[index]))
-            row = ax2.bar(minutes, self.rowpermin[index], label='Ruderschläge', width=1./24./60., linewidth = 0., alpha = 0.4)
-            ax2.set_ylabel('Ruderschläge', color='r')
+            row = ax2.bar(minutes, self.rowpermin[index], label=u'Ruderschläge', width=1./24./60., linewidth = 0., alpha = 0.4, color='r')
+            ax2.set_ylabel(u'Ruderschläge', color='r')
+            ax2.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M', tz=None))
             for tl in ax2.get_yticklabels():
                 tl.set_color('r')
+        return fig
 
         
     def add_rowing_old_format(self, filename):
-        print 'Be careful: Input data does not contain info on month an year.'
+        print 'Be careful: Input data does not contain info on month and year.'
         rowdata = atpy.Table(filename, type = 'ascii', delimiter = ';')
         rowtime = np.array(map(lambda x: datetime.datetime(self.read_date[2],self.read_date[1],*x), zip(rowdata['Tag'], rowdata['Stunde'], rowdata['Minute'])))
         if 'Ruderschlaege/Minute' in rowdata.keys():
@@ -158,7 +162,9 @@ class NX2Table(atpy.Table):
                 self.rowpermin[ind] = rowdata['Ruderschlaege/Minute'][i]
             if 'sailing' in self.keys():
                 self.sailing[ind] = rowdata['Segel'][i]
-
+#e.g. label plot in 4 min intervals
+#ax.xaxis.set_major_locator(matplotlib.dates.MinuteLocator(interval = 4))
+#do I need ax.autoscale_view() ? Don't know.
     def minutes_index(self):
         '''return an index array to acess exactly one field per minute.
     
