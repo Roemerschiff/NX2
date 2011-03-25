@@ -13,12 +13,19 @@ import matplotlib.dates
 
 mps2knots = 0.51444  # factor to convert m/s to knots
 
-def read_NX2(self, filename, date, corr_bsp = 1.,origin = None):
+#TBD: ideas for further development
+#   read_NX2: define proper timezone instead of timeoffset
+
+def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
     '''read in csv data and initialize table
     
     :param filename: filename as string or other input compatible with asciitable
     :param date: date of measurement
     :type date: tuple of integers ``(day, month, year)``
+    :keyword corr_bsp: multiplictive correction factor for BSP
+    :keyword origin:tuple (lat, lon) in deg of x,y origin
+        default: lat, lon at first datapoint
+    :keyword timeoffset: hours to be added to convert UT to local
     '''
     #30 header values, but only 29 table entries, manually delete the last header value
     names = ['DATE', 'TIME', 'LAT', 'LON', 'AWA', 'AWS', 'BOD', 'BSP', 'BTW', 'CMG', 'COG', 'CTS', 'DEP', 'DFT', 'DMG', 'DST', 'DTW', 'HDC', 'LOG', 'RDR', 'SET', 'SOG', 'TBS', 'TEMP', 'TWA', 'TWS', 'VAR', 'VMG', 'WCV']
@@ -33,8 +40,9 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None):
     
     # TBD: self.TIME has non-unique entries
     # change [1,1,1] -> [1,1.33,1.66] ? Needs sub-s times then
-    self.datetime = np.array(map(lambda x:datetime.datetime(date[2],date[1],date[0], *sec2hms(x)),self.TIME))
-    self.time = np.array(map(lambda x:datetime.time(*sec2hms(x)),self.TIME))
+    TIME = timeoffset * 3600 + self.TIME
+    self.datetime = np.array(map(lambda x:datetime.datetime(date[2],date[1],date[0], *sec2hms(x)),TIME))
+    self.time = np.array(map(lambda x:datetime.time(*sec2hms(x)),TIME))
     # remove all columns which contain only NaNs
     # interpolate nans in those columns with only a few nans
     for name in self.names:
@@ -140,6 +148,10 @@ class NX2Table(atpy.Table):
 
         
     def add_rowing_old_format(self, filename):
+        '''add rowing and sailing data
+        
+        :input: filename for cvs file in format as used in 2008
+        '''
         print 'Be careful: Input data does not contain info on month and year.'
         rowdata = atpy.Table(filename, type = 'ascii', delimiter = ';')
         rowtime = np.array(map(lambda x: datetime.datetime(self.read_date[2],self.read_date[1],*x), zip(rowdata['Tag'], rowdata['Stunde'], rowdata['Minute'])))
