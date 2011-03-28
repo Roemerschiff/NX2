@@ -97,6 +97,10 @@ class NX2Table(atpy.Table):
         new_table.origin = self.origin
         new_table.read_date = self.read_date
         return new_table
+        
+    def when(self, t1=(0,0,0),t2=(23,59,59)):
+        ind = (self.time >= datetime.time(*t1)) & (self.time <= datetime.time(*t2))
+        return self.where(self, ind)
 
     def plot_course(self, scale = 50, n = 300):
         plt.clf()
@@ -134,6 +138,9 @@ class NX2Table(atpy.Table):
         bsp = ax.plot(self.datetime[ind], self.BSP[ind], label='BSP')
         xlab = ax.get_xticklabels()
         for label in xlab: label.set_rotation(30)
+        
+        if 'sailing' in self.keys():
+            ax.plot(self.datetime[ind & (self.sailing == 1)], 'bs')
         #plt.xticks(rotation=45)
         if 'rowpermin' in self.keys():
             ax2 = ax.twinx()
@@ -143,7 +150,7 @@ class NX2Table(atpy.Table):
             ax2.set_ylabel(u'Ruderschläge', color='r')
             ax2.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M', tz=None))
             for tl in ax2.get_yticklabels():
-                tl.set_color('r')
+                tl.set_color('r')            
         return fig
 
         
