@@ -141,7 +141,8 @@ class NX2Table(atpy.Table):
         for label in xlab: label.set_rotation(30)
         
         if 'sailing' in self.keys():
-            ax.plot(self.datetime[ind & (self.sailing == 1)], 'bs')
+            #sailind = (ind & (self.sailing == 1))
+            sail = ax.plot(self.datetime[ind], self.sailing[ind], 'bs', label = 'Sailing')
         #plt.xticks(rotation=45)
         if 'rowpermin' in self.keys():
             ax2 = ax.twinx()
