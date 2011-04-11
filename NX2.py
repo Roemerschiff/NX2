@@ -10,6 +10,7 @@ import matplotlib.pylab as plt
 import warnings
 import matplotlib
 import matplotlib.dates
+import itertools 
 
 mps2knots = 0.51444  # factor to convert m/s to knots
 
@@ -196,6 +197,67 @@ class NX2Table(atpy.Table):
         return np.hstack((np.array([True]),(minutes[1:] != minutes[0:-1])))
 # In [45]: scipy.signal.convolve(np.array([0.,0,0,1,0,0]),np.array([.5, .5,0.]),mode='same')
 #Out[45]: array([ 0. ,  0. ,  0.5,  0.5,  0. ,  0. ])
+
+    def write_kml(self, filename):
+        def write_leg(self, kmlFile, ind, name ='', style = '#yellowLine', skip = 1):
+            LAT = self.LAT[ind]
+            LON = self.LON[ind]
+            latchange = np.hstack([True,np.diff(LAT) != 0.])
+            lonchange = np.hstack([True,np.diff(LON) != 0.])
+            change = (latchange & lonchange).nonzero()
+            kmlFile.write('      <Placemark>')
+            kmlFile.write('        <name>'+name+'</name>')
+            kmlFile.write('        <description>Start:'+str(self.datetime[ind[0]]) +'</description>')
+            kmlFile.write('        <styleUrl>'+style+'</styleUrl>')
+            kmlFile.write('        <LineString>')
+            kmlFile.write('          <extrude>1</extrude>')
+            kmlFile.write('          <tessellate>1</tessellate>')
+            kmlFile.write('          <altitudeMode>absolute</altitudeMode>')
+            kmlFile.write('          <coordinates>\n')
+            for i in change[0][::skip]:
+                kmlFile.write('          {0:10.7f}, {1:10.7f}\n'.format(LON[i], LAT[i]))
+            kmlFile.write('        </coordinates>')
+            kmlFile.write('      </LineString>')
+            kmlFile.write('    </Placemark>\n')
+            
+        with open(filename, 'w') as kmlFile:
+            kmlFile.write(r'''<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://earth.google.com/kml/2.2">
+  <Document>''')
+            kmlFile.write('  <name> Fahrtstrecke {0:2n}.{0:2n}.{0:2n} </name>'.format(*self.read_date))
+            kmlFile.write(r'''  <description>Dies stellt die Fahrtstrecke der Galeere am angegebenen Tag dar. Sie sieht eckig aus, weil das GPS nur auf einige Meter genau ist. Ruder und Segelstrecken werden mit unterschiedlichen Farben angezeigt. Jede Strecke kann auf der Karte einzeln an- und ausgeschaltet werden. Bei jeder Strecke ist die Startzeit vermerkt.
+Fragen an: Moritz.guenther@hs.uni-hamburg.de</description>
+    <Style id="yellowLine">
+      <LineStyle>
+        <color>7f00ffff</color>
+        <width>4</width>
+      </LineStyle>
+    </Style>
+    <Style id="redLine">
+      <LineStyle>
+        <color>7f0000ff</color>
+        <width>4</width>
+      </LineStyle>
+    </Style>''')
+            if 'sailing' in self.keys():
+                kmlFile.write(r'''    <Folder>
+        <name>Ruderstrecke</name>
+      <description>Hier war das Segel nicht gesetzt, entweder wurde gerudert oder Pause gemacht.</description>
+      <open>0</open>  ''')
+                phases = [list(g) for key, g in itertools.groupby(np.arange(len(self)), lambda k: (self.sailing[k] == 1.)) if key == False]
+                for phase in phases: write_leg(self, kmlFile, phase, name ='Ruderstrecke', style = '#yellowLine', skip = 1)
+                kmlFile.write('    </Folder>')
+                kmlFile.write('    <Folder>')
+                kmlFile.write('        <name>Segelstrecke</name>')
+                kmlFile.write('      <description>Segel gesetzt!</description>') 
+                kmlFile.write('      <open>0</open>  ')
+                phases = [list(g) for key, g in itertools.groupby(np.arange(len(self)), lambda k: (self.sailing[k] == 1.)) if key == True]
+                for phase in phases: write_leg(self, kmlFile, phase, name ='Segelstrecke', style = '#redLine', skip = 1)
+                kmlFile.write('    </Folder>')
+            else:
+                write_leg(self, kmlFile, phase, style = '#yellowLine')
+            kmlFile.write('  </Document>')
+            kmlFile.write('</kml>')
 
 def test(x,y):
         fig = plt.figure()
