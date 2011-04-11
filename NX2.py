@@ -34,6 +34,7 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
     atpy.Table.__init__(self, filename, type='ascii', delimiter=',', names=names, fill_values=('','nan'))
     
     self.read_date=date
+    self.filename = filename
     if origin: 
         self.origin = origin
     else:    
@@ -62,6 +63,7 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
     self.add_column('x', 2.*np.pi*r_earth*np.cos(self.LAT/180.*np.pi)/360.*(self.LON-self.origin[1]))
 
     self.BSP = self.BSP * corr_bsp
+    self.write_kml(self.filename+'.kml')
 
 atpy.register_reader('nx2', read_NX2, override = True)
 
@@ -183,6 +185,8 @@ class NX2Table(atpy.Table):
                 self.rowpermin[ind] = rowdata['Ruderschlaege/Minute'][i]
             if 'sailing' in self.keys():
                 self.sailing[ind] = rowdata['Segel'][i]
+        self.write_kml(self.filename+'.kml')
+
 #e.g. label plot in 4 min intervals
 #ax.xaxis.set_major_locator(matplotlib.dates.MinuteLocator(interval = 4))
 #do I need ax.autoscale_view() ? Don't know.
@@ -256,9 +260,10 @@ Fragen an: Moritz.guenther@hs.uni-hamburg.de</description>
                 for phase in phases: write_leg(self, kmlFile, phase, name ='Segelstrecke', style = '#redLine', skip = 1)
                 kmlFile.write('    </Folder>')
             else:
-                write_leg(self, kmlFile, phase, style = '#yellowLine')
+                write_leg(self, kmlFile, np.arange(len(self)), style = '#yellowLine')
             kmlFile.write('  </Document>')
             kmlFile.write('</kml>')
+        print 'Wrote kml file: '+filename
 
 def test(x,y):
         fig = plt.figure()
