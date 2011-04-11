@@ -205,7 +205,7 @@ class NX2Table(atpy.Table):
             LON = self.LON[ind]
             latchange = np.hstack([True,np.diff(LAT) != 0.])
             lonchange = np.hstack([True,np.diff(LON) != 0.])
-            change = (latchange & lonchange).nonzero()
+            change = (latchange | lonchange).nonzero()
             kmlFile.write('      <Placemark>')
             kmlFile.write('        <name>'+name+'</name>')
             kmlFile.write('        <description>Start:'+str(self.datetime[ind[0]]) +'</description>')
