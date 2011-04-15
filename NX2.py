@@ -6,6 +6,7 @@ import datetime
 import itertools
 import scipy
 import scipy.interpolate
+from scipy.signal import convolve
 import matplotlib.pylab as plt
 import warnings
 import matplotlib
@@ -13,6 +14,18 @@ import matplotlib.dates
 import itertools 
 
 mps2knots = 0.51444  # factor to convert m/s to knots
+
+def smooth(data, t_e):
+    '''smooth an array with an exponential decay
+
+    :param data: input array to be smoothed
+    :param t_e: decay timescale of expoential in number of bins
+        (for NX2 data, i.e. seconds)'''
+    kernel = np.zeros(2*3*t_e+1)
+    kernel[3*t_e:] = np.exp(-np.arange(3*t_e)/t_e)
+    kernel = kernel / kerel.sum()
+    return convolve(data,kernel,'same')
+
 
 #TBD: ideas for further development
 #   read_NX2: define proper timezone instead of timeoffset
