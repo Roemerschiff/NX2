@@ -217,6 +217,10 @@ class NX2Table(atpy.Table):
 #Out[45]: array([ 0. ,  0. ,  0.5,  0.5,  0. ,  0. ])
 
     def write_kml(self, filename):
+        '''write a kml file from an NX2 object
+
+        :param filename: file name or path for output
+        '''
         def write_leg(self, kmlFile, ind, name ='', style = '#yellowLine', skip = 1):
             LAT = self.LAT[ind]
             LON = self.LON[ind]
