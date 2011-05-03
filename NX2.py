@@ -41,10 +41,14 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
         default: lat, lon at first datapoint
     :keyword timeoffset: hours to be added to convert UT to local
     '''
-    #30 header values, but only 29 table entries, manually delete the last header value
-    names = ['DATE', 'TIME', 'LAT', 'LON', 'AWA', 'AWS', 'BOD', 'BSP', 'BTW', 'CMG', 'COG', 'CTS', 'DEP', 'DFT', 'DMG', 'DST', 'DTW', 'HDC', 'LOG', 'RDR', 'SET', 'SOG', 'TBS', 'TEMP', 'TWA', 'TWS', 'VAR', 'VMG', 'WCV']
-    
-    atpy.Table.__init__(self, filename, type='ascii', delimiter=',', names=names, fill_values=('','nan'))
+    try:
+        atpy.Table.__init__(self, filename, type='ascii', delimiter=',', fill_values=('','nan'), guess=False)
+        print 'Reading new format NX2 table - Export with 1.08'
+    except asciitable.InconsistentTableError:
+        print 'Reading NX2 table, which was exported with 1.05'
+        #30 header values, but only 29 table entries, manually delete the last header value
+        names = ['DATE', 'TIME', 'LAT', 'LON', 'AWA', 'AWS', 'BOD', 'BSP', 'BTW', 'CMG', 'COG', 'CTS', 'DEP', 'DFT', 'DMG', 'DST', 'DTW', 'HDC', 'LOG', 'RDR', 'SET', 'SOG', 'TBS', 'TEMP', 'TWA', 'TWS', 'VAR', 'VMG', 'WCV']
+        atpy.Table.__init__(self, filename, type='ascii', delimiter=',', names=names, fill_values=('','nan'), guess=False)
     
     self.read_date=date
     self.filename = filename
