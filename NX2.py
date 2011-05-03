@@ -120,7 +120,7 @@ class NX2Table(atpy.Table):
         
     def when(self, t1=(0,0,0),t2=(23,59,59)):
         ind = (self.time >= datetime.time(*t1)) & (self.time <= datetime.time(*t2))
-        return self.where(self, ind)
+        return self.where(ind)
 
     def plot_course(self, scale = 50, n = 300):
         plt.clf()
