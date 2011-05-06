@@ -202,7 +202,7 @@ class NX2Table(atpy.Table):
                 self.rowpermin[ind] = rowdata['Ruderschlaege/Minute'][i]
             if 'sailing' in self.keys():
                 self.sailing[ind] = rowdata['Segel'][i]
-        self.write_kml(self.filename+'.kml')
+        #self.write_kml(self.filename+'.kml')
 
 #e.g. label plot in 4 min intervals
 #ax.xaxis.set_major_locator(matplotlib.dates.MinuteLocator(interval = 4))
