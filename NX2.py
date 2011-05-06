@@ -80,7 +80,7 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
     self.add_column('x', 2.*np.pi*r_earth*np.cos(self.LAT/180.*np.pi)/360.*(self.LON-self.origin[1]))
 
     self.BSP = self.BSP * corr_bsp
-    self.write_kml(self.filename+'.kml')
+    #self.write_kml(self.filename+'.kml')
 
 atpy.register_reader('nx2', read_NX2, override = True)
 
