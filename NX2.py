@@ -108,7 +108,7 @@ class NX2Table(atpy.Table):
         index = np.isfinite(self[column])
         print "Interpolating over missing values in column " + column + ':'
         print "Maximum data gap is ", str(max(len(list(v)) for g,v in itertools.groupby(self[column]))), 'seconds'
-        func = scipy.interpolate.interp1d(self.TIME[index],self[column][index])
+        func = scipy.interpolate.interp1d(self.TIME[index],self[column][index], bounds_error = False)
         self[column][~index] = func(self.TIME[~index])
 
     def where(self, mask):
