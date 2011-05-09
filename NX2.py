@@ -56,12 +56,25 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
         self.origin = origin
     else:    
         self.origin = (self.LAT[0], self.LON[0])
-    
+    self.add_empty_column('year', np.int_)
+    self.add_empty_column('month', np.int_)
+    self.add_empty_column('day', np.int_)
+    self.add_empty_column('hour', np.int_)
+    self.add_empty_column('minute', np.int_)
+    self.add_empty_column('sec', np.int_)
+    self.year[:] = date[2]
+    self.month[:] = date[1]
+    self.day[:] = date[0]
     # TBD: self.TIME has non-unique entries
     # change [1,1,1] -> [1,1.33,1.66] ? Needs sub-s times then
     TIME = timeoffset * 3600 + self.TIME
-    self.datetime = np.array(map(lambda x:datetime.datetime(date[2],date[1],date[0], *sec2hms(x)),TIME))
-    self.time = np.array(map(lambda x:datetime.time(*sec2hms(x)),TIME))
+    h,m,s = sec2hms(TIME)
+    self.hour[:] = h
+    self.minute[:] = m
+    self.sec[:] = s
+    #self.datetime = np.array(map(lambda x:datetime.datetime(date[2],date[1],date[0], *sec2hms(x)),TIME))
+    #new_table.read_date = self.read_date
+    #self.time = np.array(map(lambda x:datetime.time(*sec2hms(x)),TIME))
     # remove all columns which contain only NaNs
     # interpolate nans in those columns with only a few nans
     for name in self.names:
@@ -74,7 +87,6 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
             self.fill_nans(name)
         else:
             print 'Warning: column '+ name + ' contains more than 2% nans. No automatic interpolation performed.'  
-
     r_earth=6300e3  #in Si unit - meter
     self.add_column('y', 2.*np.pi*r_earth/360.*(self.LAT-self.origin[0]))
     self.add_column('x', 2.*np.pi*r_earth*np.cos(self.LAT/180.*np.pi)/360.*(self.LON-self.origin[1]))
@@ -102,7 +114,11 @@ class NX2Table(atpy.Table):
             kwargs['type'] = 'NX2'
         atpy.Table.__init__(self, *args, **kwargs)
     
-            
+    def datetime(self):
+        return np.array(map(datetime.datetime, self.year, self.month, self.day, self.hour, self['min'], self.sec))
+
+    def time(self):
+        return np.array(map(datetime.time, self.hour, self['min'], self.sec))
     
     def fill_nans(self, column):
         index = np.isfinite(self[column])
@@ -113,13 +129,11 @@ class NX2Table(atpy.Table):
 
     def where(self, mask):
         new_table = atpy.Table.where(self, mask)
-        new_table.time = self.time[mask]
         new_table.origin = self.origin
-        new_table.read_date = self.read_date
         return new_table
         
     def when(self, t1=(0,0,0),t2=(23,59,59)):
-        ind = (self.time >= datetime.time(*t1)) & (self.time <= datetime.time(*t2))
+        ind = (self.time() >= datetime.time(*t1)) & (self.time() <= datetime.time(*t2))
         return self.where(ind)
 
     def plot_course(self, scale = 50, n = 300):
@@ -152,21 +166,21 @@ class NX2Table(atpy.Table):
         ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M', tz=None))
         #plt.subplots_adjust(left=0.075, right=0.95, top=0.9, bottom=0.25)
 
-        ind = (self.time >= datetime.time(*t1)) & (self.time <= datetime.time(*t2))
+        ind = (self.time() >= datetime.time(*t1)) & (self.time() <= datetime.time(*t2))
 
-        sog = ax.plot(self.datetime[ind], self.SOG[ind], label='SOG')
-        bsp = ax.plot(self.datetime[ind], self.BSP[ind], label='BSP')
+        sog = ax.plot(self.datetime()[ind], self.SOG[ind], label='SOG')
+        bsp = ax.plot(self.datetime()[ind], self.BSP[ind], label='BSP')
         xlab = ax.get_xticklabels()
         for label in xlab: label.set_rotation(30)
         
         if 'sailing' in self.keys():
             #sailind = (ind & (self.sailing == 1))
-            sail = ax.plot(self.datetime[ind], self.sailing[ind], 'bs', label = 'Sailing')
+            sail = ax.plot(self.datetime()[ind], self.sailing[ind], 'bs', label = 'Sailing')
         #plt.xticks(rotation=45)
         if 'rowpermin' in self.keys():
             ax2 = ax.twinx()
             index = self.minutes_index() & ind
-            minutes = np.array(map(lambda x: x.replace(second = 0, microsecond=0),self.datetime[index]))
+            minutes = np.array(map(lambda x: x.replace(second = 0, microsecond=0),self.datetime()[index]))
             row = ax2.bar(minutes, self.rowpermin[index], label=u'Ruderschläge', width=1./24./60., linewidth = 0., alpha = 0.4, color='r')
             ax2.set_ylabel(u'Ruderschläge', color='r')
             ax2.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M', tz=None))
@@ -182,7 +196,7 @@ class NX2Table(atpy.Table):
         '''
         print 'Be careful: Input data does not contain info on month and year.'
         rowdata = atpy.Table(filename, type = 'ascii', delimiter = ';')
-        rowtime = np.array(map(lambda x: datetime.datetime(self.read_date[2],self.read_date[1],*x), zip(rowdata['Tag'], rowdata['Stunde'], rowdata['Minute'])))
+        #rowtime = np.array(map(lambda x: datetime.datetime(self.read_date[2],self.read_date[1],*x), zip(rowdata['Tag'], rowdata['Stunde'], rowdata['Minute'])))
         if 'Ruderschlaege/Minute' in rowdata.keys():
             print 'Load rowing data'
             if 'rowpermin' in self.keys():
@@ -197,7 +211,8 @@ class NX2Table(atpy.Table):
                 self.add_empty_column('sailing', dtype = '<i4', null = 0)
                 
         for i in range(len(rowdata)):
-            ind = (self.datetime >= rowtime[i]) & (self.datetime <= (rowtime[i] + datetime.timedelta(0,60)))
+            ind = (self.day == rowdata.Tag[i]) & (self.hour == rowdata.Stunde[i]) & (self.minute == rowdata.Minute[i])
+            #ind = (self.datetime() >= rowtime[i]) & (self.datetime() <= (rowtime[i] + datetime.timedelta(0,60)))
             if 'rowpermin' in self.keys():
                 self.rowpermin[ind] = rowdata['Ruderschlaege/Minute'][i]
             if 'sailing' in self.keys():
@@ -215,8 +230,8 @@ class NX2Table(atpy.Table):
         This functions return an index array of those entries where the minute
         changes, i.e. the first entry within each minute.
         '''
-        minutes = np.array(map(lambda x: x.minute, self.datetime))
-        return np.hstack((np.array([True]),(minutes[1:] != minutes[0:-1])))
+        #minutes = np.array(map(lambda x: x.minute, self.datetime()))
+        return np.hstack((np.array([True]),(self.minute[1:] != self.minute[0:-1])))
 # In [45]: scipy.signal.convolve(np.array([0.,0,0,1,0,0]),np.array([.5, .5,0.]),mode='same')
 #Out[45]: array([ 0. ,  0. ,  0.5,  0.5,  0. ,  0. ])
 
@@ -233,7 +248,7 @@ class NX2Table(atpy.Table):
             change = (latchange | lonchange).nonzero()
             kmlFile.write('      <Placemark>')
             kmlFile.write('        <name>'+name+'</name>')
-            kmlFile.write('        <description>Start:'+str(self.datetime[ind[0]]) +'</description>')
+            kmlFile.write('        <description>Start:'+str(self.datetime()[ind[0]]) +'</description>')
             kmlFile.write('        <styleUrl>'+style+'</styleUrl>')
             kmlFile.write('        <LineString>')
             kmlFile.write('          <extrude>1</extrude>')
