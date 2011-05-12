@@ -56,6 +56,20 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
         self.origin = origin
     else:    
         self.origin = (self.LAT[0], self.LON[0])
+        
+    # remove all columns which contain only NaNs
+    # interpolate nans in those columns with only a few nans
+    for name in self.names:
+        valid = np.isfinite(self[name])
+        if valid.all():
+            pass
+        elif (~valid).all():
+            self.remove_columns(name)
+        elif (np.sum(valid, dtype=np.float)/ len(valid)) >= 0.98:
+            self.fill_nans(name)
+        else:
+            print 'Warning: column '+ name + ' contains more than 2% nans. No automatic interpolation performed.'  
+
     self.add_empty_column('year', np.int_)
     self.add_empty_column('month', np.int_)
     self.add_empty_column('day', np.int_)
@@ -72,21 +86,7 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
     self.hour[:] = h
     self.minute[:] = m
     self.sec[:] = s
-    #self.datetime = np.array(map(lambda x:datetime.datetime(date[2],date[1],date[0], *sec2hms(x)),TIME))
-    #new_table.read_date = self.read_date
-    #self.time = np.array(map(lambda x:datetime.time(*sec2hms(x)),TIME))
-    # remove all columns which contain only NaNs
-    # interpolate nans in those columns with only a few nans
-    for name in self.names:
-        valid = np.isfinite(self[name])
-        if valid.all():
-            pass
-        elif (~valid).all():
-            self.remove_columns(name)
-        elif (np.sum(valid, dtype=np.float)/ len(valid)) >= 0.98:
-            self.fill_nans(name)
-        else:
-            print 'Warning: column '+ name + ' contains more than 2% nans. No automatic interpolation performed.'  
+
     r_earth=6300e3  #in Si unit - meter
     self.add_column('y', 2.*np.pi*r_earth/360.*(self.LAT-self.origin[0]))
     self.add_column('x', 2.*np.pi*r_earth*np.cos(self.LAT/180.*np.pi)/360.*(self.LON-self.origin[1]))
@@ -122,10 +122,15 @@ class NX2Table(atpy.Table):
     
     def fill_nans(self, column):
         index = np.isfinite(self[column])
-        print "Interpolating over missing values in column " + column + ':'
+        print "Interpolating over missing values in column " + column
         print "Maximum data gap is ", str(max([len(list(v)) for g,v in itertools.groupby(index) if not g])), 'lines'
-        func = scipy.interpolate.interp1d(self.TIME[index],self[column][index], bounds_error = False)
-        self[column][~index] = func(self.TIME[~index])
+        if column == 'TIME':
+            x = np.arange(len(self),dtype = np.float)
+            func = scipy.interpolate.interp1d(x[index],self[column][index], bounds_error = False)
+            self[column][~index] = func(x[~index])
+        else:
+            func = scipy.interpolate.interp1d(self.TIME[index],self[column][index], bounds_error = False)
+            self[column][~index] = func(self.TIME[~index])
 
     def where(self, mask):
         new_table = atpy.Table.where(self, mask)
