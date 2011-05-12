@@ -83,7 +83,7 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
             pass
         elif (~valid).all():
             self.remove_columns(name)
-        elif (np.sum(valid)/ len(valid)) <= 0.98:
+        elif (np.sum(valid, dtype=np.float)/ len(valid)) <= 0.98:
             self.fill_nans(name)
         else:
             print 'Warning: column '+ name + ' contains more than 2% nans. No automatic interpolation performed.'  
@@ -123,7 +123,7 @@ class NX2Table(atpy.Table):
     def fill_nans(self, column):
         index = np.isfinite(self[column])
         print "Interpolating over missing values in column " + column + ':'
-        print "Maximum data gap is ", str(max([len(list(v)) for g,v in itertools.groupby(index) if not g])), 'seconds'
+        print "Maximum data gap is ", str(max([len(list(v)) for g,v in itertools.groupby(index) if not g])), 'lines'
         func = scipy.interpolate.interp1d(self.TIME[index],self[column][index], bounds_error = False)
         self[column][~index] = func(self.TIME[~index])
 
