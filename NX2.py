@@ -83,7 +83,7 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
             pass
         elif (~valid).all():
             self.remove_columns(name)
-        elif (np.sum(valid, dtype=np.float)/ len(valid)) <= 0.98:
+        elif (np.sum(valid, dtype=np.float)/ len(valid)) >= 0.98:
             self.fill_nans(name)
         else:
             print 'Warning: column '+ name + ' contains more than 2% nans. No automatic interpolation performed.'  
