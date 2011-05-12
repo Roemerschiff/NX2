@@ -115,15 +115,15 @@ class NX2Table(atpy.Table):
         atpy.Table.__init__(self, *args, **kwargs)
     
     def datetime(self):
-        return np.array(map(datetime.datetime, self.year, self.month, self.day, self.hour, self['min'], self.sec))
+        return np.array(map(datetime.datetime, self.year, self.month, self.day, self.hour, self.minute, self.sec))
 
     def time(self):
-        return np.array(map(datetime.time, self.hour, self['min'], self.sec))
+        return np.array(map(datetime.time, self.hour, self.minute, self.sec))
     
     def fill_nans(self, column):
         index = np.isfinite(self[column])
         print "Interpolating over missing values in column " + column + ':'
-        print "Maximum data gap is ", str(max(len(list(v)) for g,v in itertools.groupby(self[column]))), 'seconds'
+        print "Maximum data gap is ", str(max([len(list(v)) for g,v in itertools.groupby(index) if not g])), 'seconds'
         func = scipy.interpolate.interp1d(self.TIME[index],self[column][index], bounds_error = False)
         self[column][~index] = func(self.TIME[~index])
 
