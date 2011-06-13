@@ -15,7 +15,7 @@ import itertools
 
 mps2knots = 0.51444  # factor to convert m/s to knots
 
-def smooth(data, t_e):
+def smooth_expdec(data, t_e):
     '''smooth an array with an exponential decay
 
     :param data: input array to be smoothed
@@ -23,9 +23,19 @@ def smooth(data, t_e):
         (for NX2 data, i.e. seconds)'''
     kernel = np.zeros(2*3*t_e+1)
     kernel[3*t_e:] = np.exp(-np.arange(3*t_e)/t_e)
-    kernel = kernel / kerel.sum()
+    kernel = kernel / kernel.sum()
     return convolve(data,kernel,'same')
 
+def smooth_gauss(data, width):
+    '''smooth an array with a gauss
+
+    :param data: input array to be smoothed
+    :param width: width of gauss distribution in number of bins
+        (for NX2 data, i.e. seconds)'''
+    norm = scipy.stats.norm(0.,width)
+    kernel = norm.pdf(np.arange(-3.*width,3.001*width))
+    kernel = kernel / kernel.sum()
+    return convolve(data,kernel,'same')
 
 #TBD: ideas for further development
 #   read_NX2: define proper timezone instead of timeoffset
@@ -42,13 +52,13 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
     :keyword timeoffset: hours to be added to convert UT to local
     '''
     try:
-        atpy.Table.__init__(self, filename, type='ascii', delimiter=',', fill_values=('','nan'), data_start = 3)
+        atpy.Table.__init__(self, filename, type='ascii', delimiter=',', fill_values=('','nan'), data_start = 5)
         print 'Reading new format NX2 table - Export with 1.08'
     except asciitable.InconsistentTableError:
         print 'Reading NX2 table, which was exported with 1.05'
         #30 header values, but only 29 table entries, manually delete the last header value
         names = ['DATE', 'TIME', 'LAT', 'LON', 'AWA', 'AWS', 'BOD', 'BSP', 'BTW', 'CMG', 'COG', 'CTS', 'DEP', 'DFT', 'DMG', 'DST', 'DTW', 'HDC', 'LOG', 'RDR', 'SET', 'SOG', 'TBS', 'TEMP', 'TWA', 'TWS', 'VAR', 'VMG', 'WCV']
-        atpy.Table.__init__(self, filename, type='ascii', delimiter=',', names=names, fill_values=('','nan'), data_start = 3)
+        atpy.Table.__init__(self, filename, type='ascii', delimiter=',', names=names, fill_values=('','nan'), data_start = 5)
     
     self.read_date=date
     self.filename = filename
@@ -66,6 +76,9 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
         elif (~valid).all():
             self.remove_columns(name)
         elif (np.sum(valid, dtype=np.float)/ len(valid)) >= 0.98:
+            self.fill_nans(name)
+        elif name == 'TIME':
+            print 'Warning: TIME contains > 2 % nans. Interpolating ...'
             self.fill_nans(name)
         else:
             print 'Warning: column '+ name + ' contains more than 2% nans. No automatic interpolation performed.'  
@@ -270,7 +283,7 @@ class NX2Table(atpy.Table):
             kmlFile.write(r'''<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://earth.google.com/kml/2.2">
   <Document>''')
-            kmlFile.write('  <name> Fahrtstrecke {0:2n}.{0:2n}.{0:2n} </name>'.format(*self.read_date))
+            kmlFile.write('  <name> Fahrtstrecke {0:2n}.{1:2n}.{2:2n} </name>'.format(*self.read_date))
             kmlFile.write(r'''  <description>Dies stellt die Fahrtstrecke der Galeere am angegebenen Tag dar. Sie sieht eckig aus, weil das GPS nur auf einige Meter genau ist. Ruder und Segelstrecken werden mit unterschiedlichen Farben angezeigt. Jede Strecke kann auf der Karte einzeln an- und ausgeschaltet werden. Bei jeder Strecke ist die Startzeit vermerkt.
 Fragen an: Moritz.guenther@hs.uni-hamburg.de</description>
     <Style id="yellowLine">
