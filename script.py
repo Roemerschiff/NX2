@@ -37,11 +37,17 @@ digtwa = np.digitize(np.abs(dat.TWA),anglebins)
 bsp = np.zeros([max(digtws),max(digtwa)])
 for i in range(max(digtws)):
   for j in range(max(digtwa)):
-    bsp[i,j] = np.mean(dat.BSP[(dat.sailing ==1)&(digtws==i+1)&(digtwa==j+1)])
-  plt.polar(np.deg2rad(anglebins[0:-1]+np.diff(anglebins)/2.), bsp[i,:], label='v= {0:3.1f}'.format(twsbins[i:i+2].mean()))
+    bsp[i,j] = np.median(dat.BSP[(dat.sailing ==1)&(digtws==i+1)&(digtwa==j+1)])
+  plt.polar(np.deg2rad(anglebins[0:-1]+np.diff(anglebins)/2.), bsp[i,:-1], label='v= {0:3.1f}'.format(twsbins[i:i+2].mean()))
 
 plt.legend()
 
 
+import glob
+filelist = glob.glob('../2011/2011*csv')
+dat = NX2.NX2Table(filelist[0], (int(filelist[0][14:16]),int(filelist[0][12:14]),int(filelist[0][8:12])))
+for fil in filelist[1:]:
+    data = NX2.NX2Table(fil, (int(fil[14:16]),int(fil[12:14]),int(fil[8:12])))
+    dat.append(data)    
 
-
+dat.add_rowing_old_format('../2011/Ruderschlaege2011.csv')

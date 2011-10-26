@@ -115,10 +115,10 @@ class NX2Table(atpy.Table):
         atpy.Table.__init__(self, *args, **kwargs)
     
     def datetime(self):
-        return np.array(map(datetime.datetime, self.year, self.month, self.day, self.hour, self['min'], self.sec))
+        return np.array(map(datetime.datetime, self.year, self.month, self.day, self.hour, self.minute, self.sec))
 
     def time(self):
-        return np.array(map(datetime.time, self.hour, self['min'], self.sec))
+        return np.array(map(datetime.time, self.hour, self.minute, self.sec))
     
     def fill_nans(self, column):
         index = np.isfinite(self[column])
