@@ -52,7 +52,7 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
     :keyword timeoffset: hours to be added to convert UT to local
     '''
     try:
-        atpy.Table.__init__(self, filename, type='ascii', delimiter=',', fill_values=('','nan'), data_start = 5)
+        atpy.Table.__init__(self, filename, type='ascii', delimiter=',', fill_values=('','nan'), data_start = 5, guess = False)
         print 'Reading new format NX2 table - Export with 1.08'
     except asciitable.InconsistentTableError:
         print 'Reading NX2 table, which was exported with 1.05'
