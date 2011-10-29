@@ -90,7 +90,10 @@ plt.ylabel('Geschwindigkeit: Log')
 plt.title(r'Bestimmung eines Korrekturfaktors')
 plt.savefig(plotpath + 'BSPcorr.png')
 
+
 merge.BSP = merge.BSP / fit.beta[0]
+
+
 
 ## from here in in plots.py
 
@@ -114,3 +117,17 @@ for fil in tab.col1:
     date = (datestr[6:8],datestr[4:6],datestr[0:4])
     print '<P><A HREF="http://maps.google.de/maps?f=q&amp;hl=de&amp;geocode=&amp;q=http:%2F%2Fwww.hs.uni-hamburg.de%2FDE%2FIns%2FPer%2FGuenther%2FGaleere%2F'+datestr+'.kml&amp;ie=UTF8&amp;t=h&amp;z=15">Fahrt vom '+date[0]+'.'+date[1]+'.'+date[2]+'</A></P>'
 # Replace + with %2B in html
+
+
+# Quick and dirty polar diagram
+
+#twsbins = np.array([0.,2.,4.,6.,8.])
+#digtws = np.digitize(dat.TWS, twsbins)
+##make bins slightly larger than 15., so that 180. is part of last bin
+#anglebins = np.arange(0., 181., 15.001)
+#digtwa = np.digitize(np.abs(dat.TWA),anglebins)
+#bsp = np.zeros([max(digtws),max(digtwa)])
+#for i in range(max(digtws)):
+  #for j in range(max(digtwa)):
+    #bsp[i,j] = np.median(dat.BSP[(dat.sailing ==1)&(digtws==i+1)&(digtwa==j+1)])
+  #plt.polar(np.deg2rad(anglebins[0:-1]+np.diff(anglebins)/2.), bsp[i,:-1], label='v= {0:3.1f}'.format(twsbins[i:i+2].mean()))
