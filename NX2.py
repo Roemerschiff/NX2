@@ -6,6 +6,8 @@ import datetime
 import itertools
 import scipy
 import scipy.interpolate
+import scipy.stats
+import scipy.odr
 from scipy.signal import convolve
 import matplotlib.pylab as plt
 import warnings
@@ -51,14 +53,17 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
         default: lat, lon at first datapoint
     :keyword timeoffset: hours to be added to convert UT to local
     '''
+    include_names = ['TIME', 'LAT', 'LON', 'AWA', 'AWS', 'BSP', 'COG', 'DFT', 'HDC', 'SET', 'SOG', 'TWA', 'TWS']
+    #converters = {'TIME': asciitable.convert_list(float)}
+
     try:
-        atpy.Table.__init__(self, filename, type='ascii', delimiter=',', fill_values=('','nan'), data_start = 5)
+        atpy.Table.__init__(self, filename, type='ascii', delimiter=',', fill_values=('','nan'), data_start = 5, include_names = include_names, guess = False)
         print 'Reading new format NX2 table - Export with 1.08'
     except asciitable.InconsistentTableError:
         print 'Reading NX2 table, which was exported with 1.05'
         #30 header values, but only 29 table entries, manually delete the last header value
         names = ['DATE', 'TIME', 'LAT', 'LON', 'AWA', 'AWS', 'BOD', 'BSP', 'BTW', 'CMG', 'COG', 'CTS', 'DEP', 'DFT', 'DMG', 'DST', 'DTW', 'HDC', 'LOG', 'RDR', 'SET', 'SOG', 'TBS', 'TEMP', 'TWA', 'TWS', 'VAR', 'VMG', 'WCV']
-        atpy.Table.__init__(self, filename, type='ascii', delimiter=',', names=names, fill_values=('','nan'), data_start = 5)
+        atpy.Table.__init__(self, filename, type='ascii', delimiter=',', names=names, fill_values=('','nan'), data_start = 5, include_names = include_names)
     
     self.read_date=date
     self.filename = filename
@@ -153,6 +158,27 @@ class NX2Table(atpy.Table):
     def when(self, t1=(0,0,0),t2=(23,59,59)):
         ind = (self.time() >= datetime.time(*t1)) & (self.time() <= datetime.time(*t2))
         return self.where(ind)
+    
+    def fit_BSP_corr(self):
+        def line(B, x):
+            ''' Linear function y = m*x + b '''
+            return B[0] *x
+        
+        con1 = (self.BSP > 0)  #moving
+        con2 = (np.abs(self.COG - self.HDC) < 15.)
+        #SOG and BSP have different resonse times -> ignore gradients
+        smoothed = smooth_gauss(self.BSP, 3.)
+        con3 = (abs(np.diff(smoothed)) < 0.01) # careful! n-1 elements!
+        myl = con3.tolist()
+        myl.append([True])
+        con3 = np.array(myl)
+        con = con1 & con2 & con3
+        linear = scipy.odr.Model(line)
+        mydata = scipy.odr.RealData(self.SOG[con],self.BSP[con])
+        myodr = scipy.odr.ODR(mydata, linear, beta0 = [1.])
+        myoutput = myodr.run()
+        return myoutput, con
+
 
     def plot_course(self, scale = 50, n = 300):
         plt.clf()
@@ -176,7 +202,9 @@ class NX2Table(atpy.Table):
         qk_wind = plt.quiverkey(quiver_wind, .1, 0.95, qk_scale, 'Wind', labelpos='E')
         qk_bsp = plt.quiverkey(quiver_bsp, .1, 0.9, qk_scale, 'Bewegung gegen Wasser', labelpos='E')
         qk_sog = plt.quiverkey(quiver_sog, .1, 0.85, qk_scale, u'Bewegung über Grund', labelpos='E')
-  
+        plt.xlabel('West - Ost [Meter]')
+        plt.ylabel('Sued - Nord [Meter]')
+        
     def plot_speeds(self, t1=(0,0,0),t2=(23,59,59)):
         fig = plt.figure()
         fig.canvas.set_window_title('Bootsgeschwindigkeit')
@@ -203,7 +231,9 @@ class NX2Table(atpy.Table):
             ax2.set_ylabel(u'Ruderschläge', color='r')
             ax2.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M', tz=None))
             for tl in ax2.get_yticklabels():
-                tl.set_color('r')            
+                tl.set_color('r') 
+        lab = plt.ylabel('Geschwindigkeit in Knoten')
+        lab = plt.xlabel('Uhrzeit')
         return fig
 
         
