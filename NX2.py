@@ -160,6 +160,21 @@ class NX2Table(atpy.Table):
         return self.where(ind)
     
     def fit_BSP_corr(self):
+        '''fit a linear correlation between BSP and SOG
+        
+        Only points which fullfill the following criteria are used:
+        
+            - BSP > 0
+            - |COG-HDC| < 15
+            - small gradients in speed
+        
+        Returns
+        -------
+        myoutput : scipy.odr.odrpack.Output object
+            contains the fit results
+        con : boolean array
+            index array of points usef for fitting
+        '''
         def line(B, x):
             ''' Linear function y = m*x + b '''
             return B[0] *x
@@ -286,7 +301,10 @@ class NX2Table(atpy.Table):
     def write_kml(self, filename):
         '''write a kml file from an NX2 object
 
-        :param filename: file name or path for output
+        Parameters
+        ----------
+        filename : string
+            file name or path for output
         '''
         def write_leg(self, kmlFile, ind, name ='', style = '#yellowLine', skip = 1):
             LAT = self.LAT[ind]
