@@ -70,25 +70,31 @@ plt.savefig(plotpath + 'BSPcorr.png')
 # (find beta = 0.95)
 # However, that's different on second day: beta = 0.77 ?!?
 
+# The following plot illustrates the problem:
+d19test = d19.when(t1=(14,43,00),t2=(15,43,00))
+d19test.plot_speeds()
+plt.legend(loc = 'lower right')
+plt.savefig(plotpath + 'sppedjumps.png')
 
 dat = merge
-
+#Korrektur der BSP
+dat.BSP = dat.BSP/0.95
 plt.clf()
-
+color = ['r', 'g', 'b', 'y', 'k', 'c', 'orange']
 twsbins = np.array([0.,2.,4.,6.,8.,10.,12.])
-digtws = np.digitize(dat.TWS, twsbins)
+digaws = np.digitize(dat.AWS, twsbins)
 #make bins slightly larger than 15., so that 180. is part of last bin
 anglebins = np.arange(0., 181., 15.001)
-digtwa = np.digitize(np.abs(dat.TWA),anglebins)
-bsp = np.zeros([max(digtws)+1,max(digtwa)+1])
+digawa = np.digitize(np.abs(dat.AWA),anglebins)
+bsp = np.zeros([max(digaws)+1,max(digawa)+1])
 for i in np.arange(1,len(twsbins)):
   for j in np.arange(1,len(anglebins)):
-    bsp[i,j] = np.median(dat.SOG[(dat.sailing ==1)&(digtws==i)&(digtwa==j)])
-  plt.polar(np.deg2rad(anglebins[0:-1]+np.diff(anglebins)/2.), bsp[i,1:], label='{0:3.1f} kn'.format(twsbins[i-1:i+1].mean()))
+    bsp[i,j] = np.median(dat.BSP[(dat.sailing ==1)&(digaws==i)&(digawa==j)])
+  plt.polar(np.deg2rad(anglebins[0:-1]+np.diff(anglebins)/2.), bsp[i,1:], color = color[i], lw = 3, label='{0:3.1f}-{1:3.1f} kn'.format(twsbins[i-1], twsbins[i]))
 
 plt.legend(loc = 4)
-plt.title('Polardigramm')
-plt.savefig(plotpath +'/Polardiagram_SOG.png')
+plt.title('Polardigramm - scheinbarer Wind')
+plt.savefig(plotpath +'/Polardiagram_AW.png')
 
 
 
@@ -128,11 +134,11 @@ bsp = np.zeros([max(digtws)+1,max(digtwa)+1])
 for i in np.arange(1,len(twsbins)):
   for j in np.arange(1,len(anglebins)):
     bsp[i,j] = np.median(dat.BSP[(sailing >.99)&(digtws==i)&(digtwa==j)])
-  plt.polar(np.deg2rad(anglebins[0:-1]+np.diff(anglebins)/2.), bsp[i,1:], label='{0:3.1f} kn'.format(twsbins[i-1:i+1].mean()))
+  plt.polar(np.deg2rad(anglebins[0:-1]+np.diff(anglebins)/2.), bsp[i,1:], label='{0:3.1f}-{1:3.1f} kn'.format(twsbins[i-1], twsbins[i] ))
 
 
 plt.legend(loc = 4)
-plt.title('Polardigramm')
+plt.title('Polardiagramm')
 plt.savefig(plotpath +'/Polardiagram_filtered.png')
 
 #Hallo Moritz,
