@@ -153,6 +153,7 @@ class NX2Table(atpy.Table):
     def where(self, mask):
         new_table = atpy.Table.where(self, mask)
         new_table.origin = self.origin
+        new_table.read_date = self.read_date
         return new_table
         
     def when(self, t1=(0,0,0),t2=(23,59,59)):
@@ -233,6 +234,8 @@ class NX2Table(atpy.Table):
         bsp = ax.plot(self.datetime()[ind], self.BSP[ind], label='BSP')
         xlab = ax.get_xticklabels()
         for label in xlab: label.set_rotation(30)
+        lab = plt.ylabel('Geschwindigkeit in Knoten')
+        lab = plt.xlabel('Uhrzeit')
         
         if 'sailing' in self.keys():
             #sailind = (ind & (self.sailing == 1))
@@ -247,8 +250,7 @@ class NX2Table(atpy.Table):
             ax2.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M', tz=None))
             for tl in ax2.get_yticklabels():
                 tl.set_color('r') 
-        lab = plt.ylabel('Geschwindigkeit in Knoten')
-        lab = plt.xlabel('Uhrzeit')
+
         return fig
 
         
@@ -277,7 +279,10 @@ class NX2Table(atpy.Table):
             ind = (self.day == rowdata.Tag[i]) & (self.hour == rowdata.Stunde[i]) & (self.minute == rowdata.Minute[i])
             #ind = (self.datetime() >= rowtime[i]) & (self.datetime() <= (rowtime[i] + datetime.timedelta(0,60)))
             if 'rowpermin' in self.keys():
-                self.rowpermin[ind] = rowdata['Ruderschlaege/Minute'][i]
+                try:
+                    self.rowpermin[ind] = rowdata['Ruderschlaege/Minute'][i]
+                except ValueError:
+                    pass
             if 'sailing' in self.keys():
                 self.sailing[ind] = rowdata['Segel'][i]
         #self.write_kml(self.filename+'.kml')
