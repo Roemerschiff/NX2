@@ -1,0 +1,59 @@
+Die korrigierete GPS Geschwindigkeit im Wassersystem (vx_wassys und vy_wassys) müßte eigentlihc der BSP entsprechen. Die BSP kann höchstens geringer sein (weil nur die Komponente in Fahrtrichtung gemssen wird), aber niemals größer. Dies scheint so nicht zu stimmen,, wie die plots zeigen, die mit den Kommandos unten erzeugt werden. 
+Mögliche Ursachen:
+-Falsche Umrechnung/Zuordnung der Fließgeschwindigkeiten
+-Ungenaues Modell der Fließgeschwindigkeiten
+-falsche Kallibration der BSP
+
+1+2 sind nicht so wahrscheinlich, weil die Korrenktur schon eine sehr gute Übereinstimmung zwischen den Geschwindigkleiten verursacht (vergleiche 1+3 plot).
+3 könnte sein, s. Plot 2 und es ist schon komisch, dass die Korrekturfaktoren im Laufe der Zeit abnehmen und wir an Tag 6 1-1.1 ermitteln, also ziemlich gut den passenden Wert. Allerdings hatten wir diese ursprünglich mal verworfen, weil dies keine Kallibrationsfahrten waren (kurze Strecken, rechts+links des Flusses etc.)
+
+Plot 1 
+IDL> plot, d61.time,d61.bsp
+IDL> oplot, d61.time,(d61.vx_wassys^2.+d61.vy_wassys^2.)^.5,col=200
+IDL> oplot, d61.time,d61.bsp-(d61.vx_wassys^2.+d61.vy_wassys^2.)^.5,col=60
+IDL> print, mean(d61.bsp-(d61.vx_wassys^2.+d61.vy_wassys^2.)^.5)
+% Compiled module: MEAN.
+% Compiled module: MOMENT.
+     0.358988
+Plot 2
+IDL> plot, d61.time,d61.bsp/1.25*1.1
+IDL> oplot, d61.time,(d61.vx_wassys^2.+d61.vy_wassys^2.)^.5,col=200
+IDL> oplot, d61.time,d61.bsp/1.25*1.1-(d61.vx_wassys^2.+d61.vy_wassys^2.)^.5,col=60
+IDL> print, mean(d61.bsp/1.25*1.1-(d61.vx_wassys^2.+d61.vy_wassys^2.)^.5)
+    0.0972563
+Plot 3
+IDL> plot, d61.time,d61.bsp
+IDL> oplot, d61.time,d61.sog,col=200
+IDL> oplot, d61.time,d61.bsp-d61.sog,col=60
+
+
+Plot der Fahrt mit der farbigen Punkten, die die Strömungsgeschwindigkeit angeben
+restore,'stromgeschwindigkeit.sav'
+check_compass, d61
+plots,strom.x,strom.y,col=strom.vges*200,psym=3
+
+mache Plot von richtung, der sagt wann wir wie zur stömung standen
+IDL> beta=atan(d61.stromwo/d61.stromsn)
+IDL> betaminushdc=abs(beta-d61.hdc)
+IDL> x=d61.sog*cos(d61.cog/180.*!pi-beta)
+IDL> plot,betaminushdc
+IDL> plot,beta
+IDL> betaminushdc=abs(beta/!pi*180-d61.hdc)
+IDL> sail=place_cuts(d61,sailing=[1,0.1,20],row=[0,1,10])
+% Compiled module: PLACE_CUTS.
+% Compiled module: REVERSE.
+Sailing        8049
+ROWPERMIN        7763
+% Compiled module: SCHNITTMENGE.
+IDL> plots,sail,betaminushdc[sail],col=200
+IDL> plot,betaminushdc
+IDL> plots,sail,betaminushdc[sail],col=200,psym=3
+IDL> sail1=place_cuts(d61,sailing=[1,0.1,20])
+Sailing        8049
+IDL> plots,sail1,betaminushdc[sail],col=8,psym=3
+IDL> plot,betaminushdc
+IDL> plots,sail1,betaminushdc[sail1],col=200,psym=3
+IDL> plots,sail,betaminushdc[sail],col=8,psym=3
+
+
+

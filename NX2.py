@@ -9,6 +9,7 @@ import scipy.interpolate
 import scipy.stats
 import scipy.odr
 from scipy.signal import convolve
+from scipy.io.idl import readsav
 import matplotlib.pylab as plt
 import warnings
 import matplotlib
@@ -120,6 +121,10 @@ def sec2hms(sec):
     s, rest = divmod(rest, 1)
     return h, m, s
 
+    
+class OriginError(Exception):
+    pass
+    
 # import NX2
 # dat = NX2.NX2Table('../data/18tue_firstday.00.csv', (18,5,2009))
 # dat = NX2.NX2Table('../2008/080424eleventhday_sail.00.csv', (24,4,2008))
@@ -252,7 +257,7 @@ class NX2Table(atpy.Table):
                 tl.set_color('r') 
 
         return fig
-
+    
         
     def add_rowing_old_format(self, filename):
         '''add rowing and sailing data
@@ -286,7 +291,24 @@ class NX2Table(atpy.Table):
             if 'sailing' in self.keys():
                 self.sailing[ind] = rowdata['Segel'][i]
         #self.write_kml(self.filename+'.kml')
-
+        
+    def add_schwaller(self):
+        '''read Schwaller file with flow speed and add column to data'''
+        if np.abs(self.origin[0]-49.0164) > 0.0001:
+            raise OriginError('Lattitude of origin does not match origin of Schwaller data')
+        if np.abs(self.origin[1]-12.0285) > 0.0001:
+            raise OriginError('Longitude of origin does not match origin of Schwaller data')      
+        
+        schwaller = readsav(os.path.join(os.path.dirname(NX2.__file__), 'stromgeschwindigkeit.sav'))['strom']
+        xy = np.vstack((schwaller['X'][0],schwaller['Y'][0])).transpose()
+        schwallervx = scipy.interpolate.NearestNDInterpolator(xy, schwaller['VX'][0])
+        schwallervy = scipy.interpolate.NearestNDInterpolator(xy, schwaller['VY'][0])
+        selfxy = np.vstack((self.x, self.v)).transpose()
+        self.add_column('stromwo', schwallervx(selfxy))/mps2knots
+        self.add_column('stromsn', schwallervy(selfxy))/mps2knots
+        self.add_column('vx_wassys', self.sog*np.sin(np.deg2rad(self.cog))-self.stromwo)
+        self.add_column('vy_wassys', self.sog*np.cos(np.deg2rad(data.cog))-self.stromsn)
+        
 #e.g. label plot in 4 min intervals
 #ax.xaxis.set_major_locator(matplotlib.dates.MinuteLocator(interval = 4))
 #do I need ax.autoscale_view() ? Don't know.
@@ -298,10 +320,7 @@ class NX2Table(atpy.Table):
         This functions return an index array of those entries where the minute
         changes, i.e. the first entry within each minute.
         '''
-        #minutes = np.array(map(lambda x: x.minute, self.datetime()))
         return np.hstack((np.array([True]),(self.minute[1:] != self.minute[0:-1])))
-# In [45]: scipy.signal.convolve(np.array([0.,0,0,1,0,0]),np.array([.5, .5,0.]),mode='same')
-#Out[45]: array([ 0. ,  0. ,  0.5,  0.5,  0. ,  0. ])
 
     def write_kml(self, filename):
         '''write a kml file from an NX2 object
