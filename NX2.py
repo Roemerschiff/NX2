@@ -55,7 +55,7 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
     :keyword timeoffset: hours to be added to convert UT to local
     '''
     include_names = ['TIME', 'LAT', 'LON', 'AWA', 'AWS', 'BSP', 'COG', 'DFT', 'HDC', 'SET', 'SOG', 'TWA', 'TWS']
-    #converters = {'TIME': asciitable.convert_list(float)}
+    converters = {'TIME': asciitable.convert_list(float)}
 
     try:
         atpy.Table.__init__(self, filename, type='ascii', delimiter=',', fill_values=('','nan'), data_start = 5, include_names = include_names, guess = False)
@@ -122,6 +122,47 @@ def sec2hms(sec):
     return h, m, s
 
     
+def write_leg(data, kmlFile, ind, name ='', style = '#yellowLine', skip = 1):
+    '''write one leg of the journel to a kml file.
+
+    This does not write complete kml files, neither does it open the
+    file!
+
+    Parameters:
+    -----------
+    data : NX2 instance
+        `LAT` and `LON` are taken from this instance.
+    kmlFile : file handle
+    ind : index array
+        indexed values are written in this leg
+    name : string , optional
+        Name of this leg in kml file
+    style : string , optional
+        name of a line stype defined in the kml header
+    skip : ind
+        Skips `skip` values befroe a new position is written.
+        Use for coarser, but smaller files.
+    '''
+    LAT = data.LAT[ind]
+    LON = data.LON[ind]
+    latchange = np.hstack([True,np.diff(LAT) != 0.])
+    lonchange = np.hstack([True,np.diff(LON) != 0.])
+    change = (latchange | lonchange).nonzero()
+    kmlFile.write('      <Placemark>')
+    kmlFile.write('        <name>'+name+'</name>')
+    kmlFile.write('        <description>Start:'+str(data.datetime()[ind[0]]) +'</description>')
+    kmlFile.write('        <styleUrl>'+style+'</styleUrl>')
+    kmlFile.write('        <LineString>')
+    kmlFile.write('          <extrude>1</extrude>')
+    kmlFile.write('          <tessellate>1</tessellate>')
+    kmlFile.write('          <altitudeMode>absolute</altitudeMode>')
+    kmlFile.write('          <coordinates>\n')
+    for i in change[0][::skip]:
+        kmlFile.write('          {0:10.7f}, {1:10.7f}\n'.format(LON[i], LAT[i]))
+    kmlFile.write('        </coordinates>')
+    kmlFile.write('      </LineString>')
+    kmlFile.write('    </Placemark>\n')
+
 class OriginError(Exception):
     pass
     
@@ -329,28 +370,7 @@ class NX2Table(atpy.Table):
         ----------
         filename : string
             file name or path for output
-        '''
-        def write_leg(self, kmlFile, ind, name ='', style = '#yellowLine', skip = 1):
-            LAT = self.LAT[ind]
-            LON = self.LON[ind]
-            latchange = np.hstack([True,np.diff(LAT) != 0.])
-            lonchange = np.hstack([True,np.diff(LON) != 0.])
-            change = (latchange | lonchange).nonzero()
-            kmlFile.write('      <Placemark>')
-            kmlFile.write('        <name>'+name+'</name>')
-            kmlFile.write('        <description>Start:'+str(self.datetime()[ind[0]]) +'</description>')
-            kmlFile.write('        <styleUrl>'+style+'</styleUrl>')
-            kmlFile.write('        <LineString>')
-            kmlFile.write('          <extrude>1</extrude>')
-            kmlFile.write('          <tessellate>1</tessellate>')
-            kmlFile.write('          <altitudeMode>absolute</altitudeMode>')
-            kmlFile.write('          <coordinates>\n')
-            for i in change[0][::skip]:
-                kmlFile.write('          {0:10.7f}, {1:10.7f}\n'.format(LON[i], LAT[i]))
-            kmlFile.write('        </coordinates>')
-            kmlFile.write('      </LineString>')
-            kmlFile.write('    </Placemark>\n')
-            
+        '''            
         with open(filename, 'w') as kmlFile:
             kmlFile.write(r'''<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://earth.google.com/kml/2.2">
