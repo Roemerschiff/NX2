@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-import asciitable
-import numpy as np
-import atpy
+import os
 import datetime
 import itertools
+import warnings
+
+import numpy as np
 import scipy
 import scipy.interpolate
 import scipy.stats
@@ -11,10 +12,11 @@ import scipy.odr
 from scipy.signal import convolve
 from scipy.io.idl import readsav
 import matplotlib.pylab as plt
-import warnings
 import matplotlib
 import matplotlib.dates
-import itertools 
+
+import asciitable
+import atpy
 
 mps2knots = 0.51444  # factor to convert m/s to knots
 
@@ -248,7 +250,7 @@ class NX2Table(atpy.Table):
         # overplot path with saling in blue
         if 'sailing' in self.keys():
             # make groups of indices with the sail up
-            for sail, ind in itertools.groupby(range(len(self)),key = lambda a:self.sailing[a]):
+            for sail, ind in itertools.groupby(range(len(self)), key = lambda a:self.sailing[a]):
                 if sail ==1 :
                   index = list(ind)
                   plt.plot(self.x[index], self.y[index],'b')
@@ -340,15 +342,15 @@ class NX2Table(atpy.Table):
         if np.abs(self.origin[1]-12.0285) > 0.0001:
             raise OriginError('Longitude of origin does not match origin of Schwaller data')      
         
-        schwaller = readsav(os.path.join(os.path.dirname(NX2.__file__), 'stromgeschwindigkeit.sav'))['strom']
+        schwaller = readsav(os.path.join(os.path.dirname(__file__), 'stromgeschwindigkeit.sav'))['strom']
         xy = np.vstack((schwaller['X'][0],schwaller['Y'][0])).transpose()
         schwallervx = scipy.interpolate.NearestNDInterpolator(xy, schwaller['VX'][0])
         schwallervy = scipy.interpolate.NearestNDInterpolator(xy, schwaller['VY'][0])
-        selfxy = np.vstack((self.x, self.v)).transpose()
-        self.add_column('stromwo', schwallervx(selfxy))/mps2knots
-        self.add_column('stromsn', schwallervy(selfxy))/mps2knots
-        self.add_column('vx_wassys', self.sog*np.sin(np.deg2rad(self.cog))-self.stromwo)
-        self.add_column('vy_wassys', self.sog*np.cos(np.deg2rad(data.cog))-self.stromsn)
+        selfxy = np.vstack((self.x, self.y)).transpose()
+        self.add_column('stromwo', schwallervx(selfxy)/mps2knots)
+        self.add_column('stromsn', schwallervy(selfxy)/mps2knots)
+        self.add_column('vx_wassys', self.SOG*np.sin(np.deg2rad(self.COG))-self.stromwo)
+        self.add_column('vy_wassys', self.SOG*np.cos(np.deg2rad(self.COG))-self.stromsn)
         
 #e.g. label plot in 4 min intervals
 #ax.xaxis.set_major_locator(matplotlib.dates.MinuteLocator(interval = 4))
