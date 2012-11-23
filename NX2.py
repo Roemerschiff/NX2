@@ -255,7 +255,7 @@ class NX2Table(atpy.Table):
                   index = list(ind)
                   plt.plot(self.x[index], self.y[index],'b')
         wind_v = self.TWS / mps2knots
-        wind_ang = self.AWA + self.HDC + 180.
+        wind_ang = self.TWA + self.HDC + 180.
         quiver_wind = plt.quiver(self.x[::n],self.y[::n], self.TWS[::n]*np.sin(wind_ang[::n]/180.*np.pi), self.TWS[::n]*np.cos(wind_ang[::n]/180.*np.pi), scale = scale, color= 'g')
         quiver_bsp  = plt.quiver(self.x[::n],self.y[::n], self.BSP[::n]*np.sin(self.HDC[::n]/180.*np.pi), self.BSP[::n]*np.cos(self.HDC[::n]/180.*np.pi), scale = scale)
         quiver_sog  = plt.quiver(self.x[::n],self.y[::n], self.SOG[::n]*np.sin(self.COG[::n]/180.*np.pi), self.SOG[::n]*np.cos(self.COG[::n]/180.*np.pi), scale = scale, color= 'b')
@@ -264,7 +264,7 @@ class NX2Table(atpy.Table):
         else:
             qk_scale = scale/20.
         qk_wind = plt.quiverkey(quiver_wind, .1, 0.95, qk_scale, 'Wind', labelpos='E')
-        qk_bsp = plt.quiverkey(quiver_bsp, .1, 0.9, qk_scale, 'Bewegung gegen Wasser', labelpos='E')
+        qk_bsp = plt.quiverkey(quiver_bsp, .1, 0.9, qk_scale, 'Fahrt im Wasser (ohne Drift)', labelpos='E')
         qk_sog = plt.quiverkey(quiver_sog, .1, 0.85, qk_scale, u'Bewegung über Grund', labelpos='E')
         plt.xlabel('West - Ost [Meter]')
         plt.ylabel('Sued - Nord [Meter]')
@@ -335,23 +335,8 @@ class NX2Table(atpy.Table):
                 self.sailing[ind] = rowdata['Segel'][i]
         #self.write_kml(self.filename+'.kml')
         
-    def add_schwaller(self):
-        '''read Schwaller file with flow speed and add column to data'''
-        if np.abs(self.origin[0]-49.0164) > 0.0001:
-            raise OriginError('Lattitude of origin does not match origin of Schwaller data')
-        if np.abs(self.origin[1]-12.0285) > 0.0001:
-            raise OriginError('Longitude of origin does not match origin of Schwaller data')      
-        
-        schwaller = readsav(os.path.join(os.path.dirname(__file__), 'stromgeschwindigkeit.sav'))['strom']
-        xy = np.vstack((schwaller['X'][0],schwaller['Y'][0])).transpose()
-        schwallervx = scipy.interpolate.NearestNDInterpolator(xy, schwaller['VX'][0])
-        schwallervy = scipy.interpolate.NearestNDInterpolator(xy, schwaller['VY'][0])
-        selfxy = np.vstack((self.x, self.y)).transpose()
-        self.add_column('stromwo', schwallervx(selfxy)/mps2knots)
-        self.add_column('stromsn', schwallervy(selfxy)/mps2knots)
-        self.add_column('vx_wassys', self.SOG*np.sin(np.deg2rad(self.COG))-self.stromwo)
-        self.add_column('vy_wassys', self.SOG*np.cos(np.deg2rad(self.COG))-self.stromsn)
-        
+
+
 #e.g. label plot in 4 min intervals
 #ax.xaxis.set_major_locator(matplotlib.dates.MinuteLocator(interval = 4))
 #do I need ax.autoscale_view() ? Don't know.
@@ -423,3 +408,48 @@ def test(x,y):
         import pdb
         pdb.set_trace()
         
+
+def remove_Danube_current(data):
+    '''read Danube current simulation and transform data basis system
+
+    This procedure read a current simulation of the Danube current in the
+    region north of Regensburg, where the Navis Lusoria was tested in 2006.
+    It adds 2 columns to the NX2 table, that contain the current in the x,y
+    coordinate system (measured west-> east and south_> north) at each 
+    position of the ship.
+    Then, the speed over ground (contained in SOG and COG) is transformed into
+    a coordinate system that moves with the water. Thus, after this procedure, 
+    the SOG is not longer the "speed over ground", but instead the "speed over 
+    flowing river" and the COG is the "course over flowing river"! Similarly,
+    the TWS and the TWA are transformed ino the same coortinate system of the
+    flowing river.
+
+    The purpose of this is to correct SOG, COG, TWS and TWA in such a way
+    that the usual procedures for plotting the polar diagram and the drift are
+    applicable.
+
+    Parameters
+    ----------
+    data : NX2Table
+        The dataset to be modified
+    '''
+    if np.abs(data.origin[0]-49.0164) > 0.0001:
+        raise OriginError('Lattitude of origin does not match origin of Schwaller data')
+    if np.abs(data.origin[1]-12.0285) > 0.0001:
+        raise OriginError('Longitude of origin does not match origin of Schwaller data')      
+        
+    schwaller = readsav(os.path.join(os.path.dirname(__file__), 'stromgeschwindigkeit.sav'))['strom']
+    xy = np.vstack((schwaller['X'][0],schwaller['Y'][0])).transpose()
+    schwallervx = scipy.interpolate.NearestNDInterpolator(xy, schwaller['VX'][0])
+    schwallervy = scipy.interpolate.NearestNDInterpolator(xy, schwaller['VY'][0])
+    selfxy = np.vstack((data.x, data.y)).transpose()
+    data.add_column('currentwo', schwallervx(selfxy)/mps2knots)
+    data.add_column('currentsn', schwallervy(selfxy)/mps2knots)
+    vx_wassys = data.SOG*np.sin(np.deg2rad(data.COG))-data.currentwo
+    vy_wassys = data.SOG*np.cos(np.deg2rad(data.COG))-data.currentsn
+    TWxwater = data.TWS*np.sin(np.deg2rad(data.TWA + data.HDC + 180.))-data.currentwo
+    TWywater = data.TWS*np.cos(np.deg2rad(data.TWA + data.HDC + 180.))-data.currentsn
+    data.SOG = np.sqrt(vx_wassys**2+vy_wassys**2)
+    data.COG = np.rad2deg(np.arctan2(vx_wassys, vy_wassys))
+    data.TWS = np.sqrt(TWxwater**2 + TWywater**2)
+    data.TWA = np.rad2deg(np.arctan2(TWxwater, TWywater)) - data.HDC + 180.
