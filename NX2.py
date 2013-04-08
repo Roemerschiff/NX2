@@ -298,7 +298,11 @@ class NX2Table(atpy.Table):
             ax2.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M', tz=None))
             for tl in ax2.get_yticklabels():
                 tl.set_color('r') 
-
+        return fig
+ 
+    def plot_polar(self, fct = np.median, speedbins = np.array([0.,2.,4.,6.,8.,10.,12.]), anglebins = np.arange(0., 181., 15.001), color = ['r', 'g', 'b', 'y', 'k', 'c', 'orange']):
+        polar  = group_polar(self.TWA, self.TWS, self.BSP, speedbins, anglebins, fct = fct)
+        fig, ax = plot_polar(polar, speedbins, anglebins, color = color)
         return fig
     
         
@@ -453,3 +457,72 @@ def remove_Danube_current(data):
     data.COG = np.rad2deg(np.arctan2(vx_wassys, vy_wassys))
     data.TWS = np.sqrt(TWxwater**2 + TWywater**2)
     data.TWA = np.rad2deg(np.arctan2(TWxwater, TWywater)) - data.HDC + 180.
+
+
+def group_polar(angle, wind, bsp, speedbins, anglebins, fct = np.median):
+    '''Group data in bins according to wind angle and wind speed.
+
+    Parameters
+    ----------
+    angle : np.ndarry
+        Wind angles in degrees
+    wind : np.ndarray
+        wind speed in kn
+    bsp : np.ndarray
+        Boat speed in kn
+    speedbins : ndarray
+        bin boundaries for speed binning
+    anglebins : ndarray
+        bin boundaries for angle binning.
+        Make sure that 180. is included in last bin and not on the boundary.
+    fct : function
+        Given all bsp values in one (speedbin,anglebin) select on value to
+        be used. Common examples are np.median or np.mean
+
+    Returns
+    -------
+    polar : ndarray([len(speedbins)+1, len(anglebins)])
+        This contains the data array wit hone speed for each (speedbin, anglebin)
+    '''
+    if (angle.shape != wind.shape) or (angle.shape != bsp.shape):
+        raise ValueError('angle, wind and bsp must have same number of elements')
+
+    digspeed = np.digitize(wind, speedbins)
+    digangle = np.digitize(np.abs(angle),anglebins)
+    polar = np.zeros([len(speedbins)+1, len(anglebins)])
+    for i in np.arange(1, len(speedbins)):
+        for j in np.arange(1, len(anglebins)):
+            polar[i,j] = fct(bsp[(digspeed==i) & (digangle==j)])     
+    return polar
+
+def plot_polar(polardata, speedbins, anglebins, color = ['r', 'g', 'b', 'y', 'k', 'c', 'orange']):
+    '''Make a polar plot and label it for data in bins.
+
+    Parameters
+    ----------
+    polardata : ndarray([len(speedbins)+1, len(anglebins)])
+        Array with the values to be plotted in individual bins.
+    speedbins : ndarray
+        bin boundaries for speed binning
+    anglebins : ndarray
+        bin boundaries for angle binning.
+        Make sure that 180. is included in last bin and not on the boundary.
+    color : array
+        matplotlic colors used for plotting the line in the diagram
+
+    Returns
+    -------
+    fig : matplotlib.figure
+        A reference to the figure made for further modification.
+    ax : matplotlib.axes
+        A reference to the axes container with the plot for further modification.
+
+    '''
+    fig = plt.figure()
+    fig.canvas.set_window_title('Polardiagramm')
+    ax = fig.add_subplot(111, polar = True)
+    for i in np.arange(1, len(speedbins)):
+        temp = ax.plot(np.deg2rad(anglebins[0:-1]+np.diff(anglebins)/2.), polardata[i,1:], color = color[i], lw = 3, label='{0:3.1f}-{1:3.1f} kn'.format(speedbins[i-1], speedbins[i]))
+    temp = ax.legend(loc='lower left')
+    return fig, ax
+

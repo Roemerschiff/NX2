@@ -3,10 +3,11 @@ import glob
 import os
 import os.path
 
-db_path = '/home/moritz/'
-sys.path.append('/data/hguenther/Dropbox/code/python/NX2')
-sys.path.append(db_path + 'Dropbox/code/python/NX2')
 import NX2
+
+db_path = '/home/moritz/'
+sys.path.append(db_path + 'Dropbox/code/python/NX2')
+
 
 datapath = db_path + 'Dropbox/NX2/'
 plotpath = db_path + 'Dropbox/NX2/2012/plots/'
@@ -25,12 +26,12 @@ dat4.add_rowing_old_format(datapath + '/2012/Ruderschlaege2012.csv')
 dat5.add_rowing_old_format(datapath + '/2012/Ruderschlaege2012.csv')
 dat6.add_rowing_old_format(datapath + '/2012/Ruderschlaege2012.csv')
 
-dat.write_kml('/data/hguenther/Dropbox/NX2/homepage/source/kml/'+'20120515_1.kml')
-dat2.write_kml('/data/hguenther/Dropbox/NX2/homepage/source/kml/'+'20120515_2.kml')
-dat3.write_kml('/data/hguenther/Dropbox/NX2/homepage/source/kml/'+'20120516_1.kml')
-dat4.write_kml('/data/hguenther/Dropbox/NX2/homepage/source/kml/'+'20120517_1.kml')
-dat5.write_kml('/data/hguenther/Dropbox/NX2/homepage/source/kml/'+'20120517_2.kml')
-dat6.write_kml('/data/hguenther/Dropbox/NX2/homepage/source/kml/'+'20120518_1.kml')
+dat.write_kml(datapath +  'homepage/source/kml/'+'20120515_1.kml')
+dat2.write_kml(datapath + 'homepage/source/kml/'+'20120515_2.kml')
+dat3.write_kml(datapath + 'homepage/source/kml/'+'20120516_1.kml')
+dat4.write_kml(datapath + 'homepage/source/kml/'+'20120517_1.kml')
+dat5.write_kml(datapath + 'homepage/source/kml/'+'20120517_2.kml')
+dat6.write_kml(datapath + 'homepage/source/kml/'+'20120518_1.kml')
 
 
 merge = dat.where(np.ones(len(dat), dtype = bool))
@@ -78,7 +79,7 @@ fig = dat6.plot_speeds(t1=(10,24,00), t2=(10,38,59))
 
 axs = fig.get_axes()
 axs[0].legend(loc = 'lower left')
-axs[1].legend(loc = 'upper right')
+axs[1].legend(loc = 'upp right')
 plt.draw()
 plt.savefig(plotpath + 'Kalibrationsfahrt.png')
     
@@ -88,26 +89,28 @@ plt.savefig(plotpath + 'Kalibrationsfahrt.png')
 smoothedBSP = NX2.smooth_gauss(merge.BSP, 3.)
 smoothedTWA = NX2.smooth_gauss(np.abs(merge.TWA), 3.)
 smoothedTWS = NX2.smooth_gauss(merge.TWS, 3.)
-index = (abs(np.diff(smoothed)) < 0.01) # careful! n-1 elements! see below
-index = np.hstack((index, [False]))
+index = (abs(np.diff(smoothedTWS)) < 0.01) # careful! n-1 elements! see below
+# index = np.hstack((index, [False]))
+fig, polar = plot_polar(smoothedTWA[index], smoothedTWS[index], smoothedBSP[index])
 
 
-plt.clf()
-color = ['r', 'g', 'b', 'y', 'k', 'c', 'orange']
-twsbins = np.array([0.,2.,4.,6.,8.,10.,12.])
-digaws = np.digitize(smoothedTWS, twsbins)
-#make bins slightly larger than 15., so that 180. is part of last bin
-anglebins = np.arange(0., 181., 15.001)
-digawa = np.digitize(np.abs(smoothedTWA),anglebins)
-bsp = np.zeros([len(twsbins)+1,len(anglebins)])
-for i in np.arange(1,len(twsbins)):
-  for j in np.arange(1,len(anglebins)):
-    bsp[i,j] = np.median(smoothedBSP[index&(merge.sailing ==1)&(digaws==i)&(digawa==j)])
-  plt.polar(np.deg2rad(anglebins[0:-1]+np.diff(anglebins)/2.), bsp[i,1:], color = color[i], lw = 3, label='{0:3.1f}-{1:3.1f} kn'.format(twsbins[i-1], twsbins[i]))
-
-
-
-
+def plot_polar(angle, wind, bsp, fct = np.median):
+    fig = plt.figure()
+    fig.canvas.set_window_title('Polardiagramm')
+    ax = fig.add_subplot(111, polar = True)
+    color = ['r', 'g', 'b', 'y', 'k', 'c', 'orange']
+    speedbins = np.array([0.,2.,4.,6.,8.,10.,12.])
+    #make bins slightly larger than 15., so that 180. is part of last bin
+    anglebins = np.arange(0., 181., 15.001)
+    digspeed = np.digitize(wind, speedbins)
+    digangle = np.digitize(np.abs(angle),anglebins)
+    polar = np.zeros([len(speedbins)+1, len(anglebins)])
+    for i in np.arange(1, len(twsbins)):
+        for j in np.arange(1, len(anglebins)):
+            polar[i,j] = fct(bsp[(digspeed==i) & (digangle==j)])
+        ax.plot(np.deg2rad(anglebins[0:-1]+np.diff(anglebins)/2.), polar[i,1:], color = color[i], lw = 3, label='{0:3.1f}-{1:3.1f} kn'.format(speedbins[i-1], speedbins[i]))
+    ax.legend(loc='lower left')
+    return fig, polar
 
 
 
