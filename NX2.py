@@ -17,6 +17,7 @@ import matplotlib.dates
 
 import asciitable
 import atpy
+from atpy.registry import register_reader
 
 mps2knots = 0.51444  # factor to convert m/s to knots
 
@@ -45,7 +46,7 @@ def smooth_gauss(data, width):
 #TBD: ideas for further development
 #   read_NX2: define proper timezone instead of timeoffset
 
-def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
+def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2, verbose = True):
     '''read in csv data and initialize table
     
     :param filename: filename as string or other input compatible with asciitable
@@ -61,9 +62,9 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
 
     try:
         atpy.Table.__init__(self, filename, type='ascii', delimiter=',', fill_values=('','nan'), data_start = 5, include_names = include_names, guess = False)
-        print 'Reading new format NX2 table - Export with 1.08'
+        if verbose: print 'Reading new format NX2 table - Export with 1.08'
     except asciitable.InconsistentTableError:
-        print 'Reading NX2 table, which was exported with 1.05'
+        if verbose: print 'Reading NX2 table, which was exported with 1.05'
         #30 header values, but only 29 table entries, manually delete the last header value
         names = ['DATE', 'TIME', 'LAT', 'LON', 'AWA', 'AWS', 'BOD', 'BSP', 'BTW', 'CMG', 'COG', 'CTS', 'DEP', 'DFT', 'DMG', 'DST', 'DTW', 'HDC', 'LOG', 'RDR', 'SET', 'SOG', 'TBS', 'TEMP', 'TWA', 'TWS', 'VAR', 'VMG', 'WCV']
         atpy.Table.__init__(self, filename, type='ascii', delimiter=',', names=names, fill_values=('','nan'), data_start = 5, include_names = include_names)
@@ -86,10 +87,10 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
         elif (np.sum(valid, dtype=np.float)/ len(valid)) >= 0.98:
             self.fill_nans(name)
         elif name == 'TIME':
-            print 'Warning: TIME contains > 2 % nans. Interpolating ...'
+            if verbose: print 'Warning: TIME contains > 2 % nans. Interpolating ...'
             self.fill_nans(name)
         else:
-            print 'Warning: column '+ name + ' contains more than 2% nans. No automatic interpolation performed.'  
+            if verbose: print 'Warning: column '+ name + ' contains more than 2% nans. No automatic interpolation performed.'  
 
     self.add_empty_column('year', np.int_)
     self.add_empty_column('month', np.int_)
@@ -115,7 +116,7 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2):
     self.BSP = self.BSP * corr_bsp
     #self.write_kml(self.filename+'.kml')
 
-atpy.register_reader('nx2', read_NX2, override = True)
+register_reader('nx2', read_NX2, override = True)
 
 def sec2hms(sec):
     h, rest = divmod(sec,3600)
