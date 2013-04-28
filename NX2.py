@@ -2,7 +2,8 @@
 import os
 import datetime
 import itertools
-import warnings
+from warnings import warn
+from exceptions import UserWarning
 
 import numpy as np
 import scipy
@@ -20,6 +21,23 @@ import atpy
 from atpy.registry import register_reader
 
 mps2knots = 0.51444  # factor to convert m/s to knots
+
+class NX2InterpolationWarning(UserWarning):
+    '''Warning class for interpolation of data columns.
+    '''
+    def __init__(self, column, maxgap  = np.inf):
+        self.column = column
+        self.maxgap = maxgap
+
+    def __str__(self):
+        if self.maxgap == np.inf:
+            return 'column '+ self.column + ' contains more than 2% nans. No automatic interpolation performed.' 
+        else:
+            return 'Interpolating over missing values in column {0}\nMaximum data gap is {1} lines.'.format(self.column, self.maxgap)
+
+class NX2RowingWarning(UserWarning):
+    '''Warning class for warning related to the matching of rowing data files.'''
+    pass
 
 def smooth_expdec(data, t_e):
     '''smooth an array with an exponential decay
@@ -87,10 +105,10 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2, 
         elif (np.sum(valid, dtype=np.float)/ len(valid)) >= 0.98:
             self.fill_nans(name)
         elif name == 'TIME':
-            if verbose: print 'Warning: TIME contains > 2 % nans. Interpolating ...'
+            warn('TIME contains > 2 % nans. Interpolating ...', NX2InterpolationWarning)
             self.fill_nans(name)
         else:
-            if verbose: print 'Warning: column '+ name + ' contains more than 2% nans. No automatic interpolation performed.'  
+            warn(NX2InterpolationWarning(name)) 
 
     self.add_empty_column('year', np.int_)
     self.add_empty_column('month', np.int_)
@@ -169,9 +187,7 @@ def write_leg(data, kmlFile, ind, name ='', style = '#yellowLine', skip = 1):
 class OriginError(Exception):
     pass
     
-# import NX2
-# dat = NX2.NX2Table('../data/18tue_firstday.00.csv', (18,5,2009))
-# dat = NX2.NX2Table('../2008/080424eleventhday_sail.00.csv', (24,4,2008))
+
 class NX2Table(atpy.Table):
   
     def __init__(self, *args, **kwargs):
@@ -189,12 +205,16 @@ class NX2Table(atpy.Table):
     
     def fill_nans(self, column):
         index = np.isfinite(self[column])
-        print "Interpolating over missing values in column " + column
-        print "Maximum data gap is ", str(max([len(list(v)) for g,v in itertools.groupby(index) if not g])), 'lines'
+        warn(NX2InterpolationWarning(column, max([len(list(v)) for g,v in itertools.groupby(index) if not g])))
         if column == 'TIME':
             x = np.arange(len(self),dtype = np.float)
             func = scipy.interpolate.interp1d(x[index],self[column][index], bounds_error = False)
             self[column][~index] = func(x[~index])
+            timeints = np.asarray(self['TIME'], dtype = np.int64)
+            # cannot change dtype of col in place, so remove and add again
+            # as int
+            self.remove_columns('TIME')
+            self.add_column('TIME', timeints, position = 0)
         else:
             func = scipy.interpolate.interp1d(self.TIME[index],self[column][index], bounds_error = False)
             self[column][~index] = func(self.TIME[~index])
@@ -301,30 +321,35 @@ class NX2Table(atpy.Table):
                 tl.set_color('r') 
         return fig
  
-    def plot_polar(self, fct = np.median, speedbins = np.array([0.,2.,4.,6.,8.,10.,12.]), anglebins = np.arange(0., 181., 15.001), color = ['r', 'g', 'b', 'y', 'k', 'c', 'orange']):
+    def plot_polar(self, ax = None, fct = np.median, speedbins = np.array([0.,2.,4.,6.,8.,10.,12.]), anglebins = np.arange(0., 181., 15.001), color = ['r', 'g', 'b', 'y', 'k', 'c', 'orange']):
         polar  = group_polar(self.TWA, self.TWS, self.BSP, speedbins, anglebins, fct = fct)
-        fig, ax = plot_polar(polar, speedbins, anglebins, color = color)
-        return fig
+        if ax is None:
+            fig = plt.figure()
+            fig.canvas.set_window_title('Polardiagramm')
+            ax = fig.add_subplot(111, polar = True)
+            
+        plot_polar(ax, polar, speedbins, anglebins, color = color)
+        return ax
     
         
-    def add_rowing_old_format(self, filename):
+    def add_rowing_old_format(self, filename, verbose = True):
         '''add rowing and sailing data
         
         :input: filename for cvs file in format as used in 2008
         '''
-        print 'Be careful: Input data does not contain info on month and year.'
+        if verbose: print 'Input data does not contain info on month and year.'
         rowdata = atpy.Table(filename, type = 'ascii', delimiter = ';')
         #rowtime = np.array(map(lambda x: datetime.datetime(self.read_date[2],self.read_date[1],*x), zip(rowdata['Tag'], rowdata['Stunde'], rowdata['Minute'])))
         if 'Ruderschlaege/Minute' in rowdata.keys():
-            print 'Load rowing data'
+            if verbose: print 'Load rowing data'
             if 'rowpermin' in self.keys():
-                print 'Updating rowing data'
+                warn('Overwriting rowing data', NX2RowingWarning)
             else:    
                 self.add_empty_column('rowpermin', dtype = '<i4', null = 0)
         if 'Segel' in rowdata.keys():
-            print 'Load sailing data'
+            if verbose: print 'Load sailing data'
             if 'sailing' in self.keys():
-                print 'Updating sailing data'
+                wanr('Overwriting sailing data', NX2RowingWarning)
             else:    
                 self.add_empty_column('sailing', dtype = '<i4', null = 0)
                 
@@ -355,7 +380,7 @@ class NX2Table(atpy.Table):
         '''
         return np.hstack((np.array([True]),(self.minute[1:] != self.minute[0:-1])))
 
-    def write_kml(self, filename):
+    def write_kml(self, filename, verbose = True):
         '''write a kml file from an NX2 object
 
         Parameters
@@ -401,7 +426,7 @@ Fragen an: Moritz.guenther@hs.uni-hamburg.de</description>
                 write_leg(self, kmlFile, np.arange(len(self)), style = '#yellowLine')
             kmlFile.write('  </Document>')
             kmlFile.write('</kml>')
-        print 'Wrote kml file: '+filename
+        if verbose: print 'Wrote kml file: '+filename
 
 def test(x,y):
         fig = plt.figure()
@@ -483,7 +508,7 @@ def group_polar(angle, wind, bsp, speedbins, anglebins, fct = np.median):
     Returns
     -------
     polar : ndarray([len(speedbins)+1, len(anglebins)])
-        This contains the data array wit hone speed for each (speedbin, anglebin)
+        This contains the data array with one speed for each (speedbin, anglebin)
     '''
     if (angle.shape != wind.shape) or (angle.shape != bsp.shape):
         raise ValueError('angle, wind and bsp must have same number of elements')
@@ -496,11 +521,13 @@ def group_polar(angle, wind, bsp, speedbins, anglebins, fct = np.median):
             polar[i,j] = fct(bsp[(digspeed==i) & (digangle==j)])     
     return polar
 
-def plot_polar(polardata, speedbins, anglebins, color = ['r', 'g', 'b', 'y', 'k', 'c', 'orange']):
+def plot_polar(ax, polardata, speedbins, anglebins, color = ['r', 'g', 'b', 'y', 'k', 'c', 'orange']):
     '''Make a polar plot and label it for data in bins.
 
     Parameters
     ----------
+    ax : matplotlib.axis instance
+        axis were the plot should be added. Will usually be a polar axis.
     polardata : ndarray([len(speedbins)+1, len(anglebins)])
         Array with the values to be plotted in individual bins.
     speedbins : ndarray
@@ -519,11 +546,8 @@ def plot_polar(polardata, speedbins, anglebins, color = ['r', 'g', 'b', 'y', 'k'
         A reference to the axes container with the plot for further modification.
 
     '''
-    fig = plt.figure()
-    fig.canvas.set_window_title('Polardiagramm')
-    ax = fig.add_subplot(111, polar = True)
     for i in np.arange(1, len(speedbins)):
         temp = ax.plot(np.deg2rad(anglebins[0:-1]+np.diff(anglebins)/2.), polardata[i,1:], color = color[i], lw = 3, label='{0:3.1f}-{1:3.1f} kn'.format(speedbins[i-1], speedbins[i]))
     temp = ax.legend(loc='lower left')
-    return fig, ax
+
 
