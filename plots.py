@@ -208,3 +208,35 @@ ylim(-1,1)
 xticklabels = ax1.get_xticklabels()+ax2.get_xticklabels()
 setp(xticklabels, visible=False)
 
+# Hochstgeschwindigkeit 2011 without Mast and Rah
+import NX2
+datapath = '/home/moritz/Dropbox/NX2/'
+dat22 = NX2.NX2Table(datapath + '2011/20110522_fourteenth_day_without_mast+rah.00.csv', (22,05,2011))
+dat22.add_rowing_old_format(datapath + '/2011/Ruderschlaege2011.csv')
+
+fig = plt.figure()
+fig.canvas.set_window_title('Bootsgeschwindigkeit')
+ax = fig.add_subplot(111)
+ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M', tz=None))
+
+ind = (dat22.time() >= datetime.time(10,39,00)) & (dat22.time() <= datetime.time(11,5,00))
+
+sog = ax.plot(dat22.datetime()[ind], dat22.SOG[ind], label='SOG')
+bsp = ax.plot(dat22.datetime()[ind], dat22.BSP[ind]/0.87, label='BSP')
+ax.legend(loc = 'upper left')
+xlab = ax.get_xticklabels()
+for label in xlab: label.set_rotation(30)
+lab = plt.ylabel('Geschwindigkeit in Knoten')
+lab = plt.xlabel('Uhrzeit')
+        
+ax2 = ax.twinx()
+index = dat22.minutes_index() & ind
+minutes = np.array(map(lambda x: x.replace(second = 0, microsecond=0), dat22.datetime()[index]))
+row = ax2.bar(minutes, dat22.rowpermin[index], label=u'Ruderschläge', width=1./24./60., linewidth = 0., alpha = 0.4, color='r')
+ax2.set_ylabel(u'Ruderschläge', color='r')
+ax2.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M', tz=None))
+for tl in ax2.get_yticklabels():
+    tl.set_color('r') 
+
+#ax2.legend()
+
