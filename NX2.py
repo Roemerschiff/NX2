@@ -46,7 +46,7 @@ def smooth_expdec(data, t_e):
     :param t_e: decay timescale of expoential in number of bins
         (for NX2 data, i.e. seconds)'''
     kernel = np.zeros(2*3*t_e+1)
-    kernel[3*t_e:] = np.exp(-np.arange(3*t_e)/t_e)
+    kernel[3*t_e:-1] = np.exp(-np.arange(3*t_e, dtype = np.float)/t_e)
     kernel = kernel / kernel.sum()
     return convolve(data,kernel,'same')
 
