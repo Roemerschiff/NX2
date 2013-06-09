@@ -8,9 +8,7 @@ from exceptions import UserWarning
 import numpy as np
 import scipy
 import scipy.interpolate
-import scipy.stats
 import scipy.odr
-from scipy.signal import convolve
 from scipy.io.idl import readsav
 import matplotlib.pylab as plt
 import matplotlib
@@ -19,6 +17,9 @@ import matplotlib.dates
 import asciitable
 import atpy
 from atpy.registry import register_reader
+
+from math_functions import *
+from polar import setup_polar_plot, plot_polar, group_polar
 
 mps2knots = 0.51444  # factor to convert m/s to knots
 
@@ -38,28 +39,6 @@ class NX2InterpolationWarning(UserWarning):
 class NX2RowingWarning(UserWarning):
     '''Warning class for warning related to the matching of rowing data files.'''
     pass
-
-def smooth_expdec(data, t_e):
-    '''smooth an array with an exponential decay
-
-    :param data: input array to be smoothed
-    :param t_e: decay timescale of expoential in number of bins
-        (for NX2 data, i.e. seconds)'''
-    kernel = np.zeros(2*3*t_e+1)
-    kernel[3*t_e:-1] = np.exp(-np.arange(3*t_e, dtype = np.float)/t_e)
-    kernel = kernel / kernel.sum()
-    return convolve(data,kernel,'same')
-
-def smooth_gauss(data, width):
-    '''smooth an array with a gauss
-
-    :param data: input array to be smoothed
-    :param width: width of gauss distribution in number of bins
-        (for NX2 data, i.e. seconds)'''
-    norm = scipy.stats.norm(0.,width)
-    kernel = norm.pdf(np.arange(-3.*width,3.001*width))
-    kernel = kernel / kernel.sum()
-    return convolve(data,kernel,'same')
 
 #TBD: ideas for further development
 #   read_NX2: define proper timezone instead of timeoffset
@@ -210,7 +189,7 @@ class NX2Table(atpy.Table):
             x = np.arange(len(self),dtype = np.float)
             func = scipy.interpolate.interp1d(x[index],self[column][index], bounds_error = False)
             self[column][~index] = func(x[~index])
-            timeints = np.asarray(self['TIME'], dtype = np.int64)
+            timeints = np.asarray(self['TIME'], dtype = np.int)
             # cannot change dtype of col in place, so remove and add again
             # as int
             self.remove_columns('TIME')
@@ -326,7 +305,7 @@ class NX2Table(atpy.Table):
         if ax is None:
             fig = plt.figure()
             fig.canvas.set_window_title('Polardiagramm')
-            ax = fig.add_subplot(111, polar = True)
+            ax, ax_original = setup_polar_plot(fig)
             
         plot_polar(ax, polar, speedbins, anglebins, color = color)
         return ax
@@ -484,70 +463,5 @@ def remove_Danube_current(data):
     data.TWS = np.sqrt(TWxwater**2 + TWywater**2)
     data.TWA = np.rad2deg(np.arctan2(TWxwater, TWywater)) - data.HDC + 180.
 
-
-def group_polar(angle, wind, bsp, speedbins, anglebins, fct = np.median):
-    '''Group data in bins according to wind angle and wind speed.
-
-    Parameters
-    ----------
-    angle : np.ndarry
-        Wind angles in degrees
-    wind : np.ndarray
-        wind speed in kn
-    bsp : np.ndarray
-        Boat speed in kn
-    speedbins : ndarray
-        bin boundaries for speed binning
-    anglebins : ndarray
-        bin boundaries for angle binning.
-        Make sure that 180. is included in last bin and not on the boundary.
-    fct : function
-        Given all bsp values in one (speedbin,anglebin) select on value to
-        be used. Common examples are np.median or np.mean
-
-    Returns
-    -------
-    polar : ndarray([len(speedbins)+1, len(anglebins)])
-        This contains the data array with one speed for each (speedbin, anglebin)
-    '''
-    if (angle.shape != wind.shape) or (angle.shape != bsp.shape):
-        raise ValueError('angle, wind and bsp must have same number of elements')
-
-    digspeed = np.digitize(wind, speedbins)
-    digangle = np.digitize(np.abs(angle),anglebins)
-    polar = np.zeros([len(speedbins)+1, len(anglebins)])
-    for i in np.arange(1, len(speedbins)):
-        for j in np.arange(1, len(anglebins)):
-            polar[i,j] = fct(bsp[(digspeed==i) & (digangle==j)])     
-    return polar
-
-def plot_polar(ax, polardata, speedbins, anglebins, color = ['r', 'g', 'b', 'y', 'k', 'c', 'orange']):
-    '''Make a polar plot and label it for data in bins.
-
-    Parameters
-    ----------
-    ax : matplotlib.axis instance
-        axis were the plot should be added. Will usually be a polar axis.
-    polardata : ndarray([len(speedbins)+1, len(anglebins)])
-        Array with the values to be plotted in individual bins.
-    speedbins : ndarray
-        bin boundaries for speed binning
-    anglebins : ndarray
-        bin boundaries for angle binning.
-        Make sure that 180. is included in last bin and not on the boundary.
-    color : array
-        matplotlic colors used for plotting the line in the diagram
-
-    Returns
-    -------
-    fig : matplotlib.figure
-        A reference to the figure made for further modification.
-    ax : matplotlib.axes
-        A reference to the axes container with the plot for further modification.
-
-    '''
-    for i in np.arange(1, len(speedbins)):
-        temp = ax.plot(np.deg2rad(anglebins[0:-1]+np.diff(anglebins)/2.), polardata[i,1:], color = color[i], lw = 3, label='{0:3.1f}-{1:3.1f} kn'.format(speedbins[i-1], speedbins[i]))
-    temp = ax.legend(loc='lower left')
 
 
