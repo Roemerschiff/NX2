@@ -245,29 +245,32 @@ class NX2Table(atpy.Table):
 
 
     def plot_course(self, scale = 50, n = 300):
-        plt.clf()
-        plt.plot(self.x, self.y,'k')
+        fig = plt.figure()
+        fig.canvas.set_window_title('Kurs und Windrichtung')
+        ax = fig.add_subplot(111)
+        ax.plot(self.x, self.y,'k')
         # overplot path with saling in blue
         if 'sailing' in self.keys():
             # make groups of indices with the sail up
             for sail, ind in itertools.groupby(range(len(self)), key = lambda a:self.sailing[a]):
                 if sail ==1 :
                   index = list(ind)
-                  plt.plot(self.x[index], self.y[index],'b')
+                  ax.plot(self.x[index], self.y[index],'b')
         wind_v = self.TWS / mps2knots
         wind_ang = self.TWA + self.HDC + 180.
-        quiver_wind = plt.quiver(self.x[::n],self.y[::n], self.TWS[::n]*np.sin(wind_ang[::n]/180.*np.pi), self.TWS[::n]*np.cos(wind_ang[::n]/180.*np.pi), scale = scale, color= 'g')
-        quiver_bsp  = plt.quiver(self.x[::n],self.y[::n], self.BSP[::n]*np.sin(self.HDC[::n]/180.*np.pi), self.BSP[::n]*np.cos(self.HDC[::n]/180.*np.pi), scale = scale)
-        quiver_sog  = plt.quiver(self.x[::n],self.y[::n], self.SOG[::n]*np.sin(self.COG[::n]/180.*np.pi), self.SOG[::n]*np.cos(self.COG[::n]/180.*np.pi), scale = scale, color= 'b')
+        quiver_wind = ax.quiver(self.x[::n],self.y[::n], self.TWS[::n]*np.sin(wind_ang[::n]/180.*np.pi), self.TWS[::n]*np.cos(wind_ang[::n]/180.*np.pi), scale = scale, color= 'g')
+        quiver_bsp  = ax.quiver(self.x[::n],self.y[::n], self.BSP[::n]*np.sin(self.HDC[::n]/180.*np.pi), self.BSP[::n]*np.cos(self.HDC[::n]/180.*np.pi), scale = scale)
+        quiver_sog  = ax.quiver(self.x[::n],self.y[::n], self.SOG[::n]*np.sin(self.COG[::n]/180.*np.pi), self.SOG[::n]*np.cos(self.COG[::n]/180.*np.pi), scale = scale, color= 'b')
         if scale == None:
             qk_scale = None
         else:
             qk_scale = scale/20.
-        qk_wind = plt.quiverkey(quiver_wind, .1, 0.95, qk_scale, 'Wind', labelpos='E')
-        qk_bsp = plt.quiverkey(quiver_bsp, .1, 0.9, qk_scale, 'Fahrt im Wasser (ohne Drift)', labelpos='E')
-        qk_sog = plt.quiverkey(quiver_sog, .1, 0.85, qk_scale, u'Bewegung über Grund', labelpos='E')
-        plt.xlabel('West - Ost [Meter]')
-        plt.ylabel('Sued - Nord [Meter]')
+        qk_wind = ax.quiverkey(quiver_wind, .1, 0.95, qk_scale, 'Wind', labelpos='E')
+        qk_bsp = ax.quiverkey(quiver_bsp, .1, 0.9, qk_scale, 'Fahrt im Wasser (ohne Drift)', labelpos='E')
+        qk_sog = ax.quiverkey(quiver_sog, .1, 0.85, qk_scale, u'Bewegung über Grund', labelpos='E')
+        ax.set_xlabel('West - Ost [Meter]')
+        ax.set_ylabel(u'Süd - Nord [Meter]')
+        return fig
         
     def plot_speeds(self, t1=(0,0,0),t2=(23,59,59)):
         fig = plt.figure()
@@ -300,15 +303,15 @@ class NX2Table(atpy.Table):
                 tl.set_color('r') 
         return fig
  
-    def plot_polar(self, ax = None, fct = np.median, speedbins = np.array([0.,2.,4.,6.,8.,10.,12.]), anglebins = np.arange(0., 181., 15.001), color = ['r', 'g', 'b', 'y', 'k', 'c', 'orange']):
+    def plot_polar(self, fct = np.median, speedbins = np.array([0.,2.,4.,6.,8.,10.,12.]), anglebins = np.arange(0., 181., 15.001), color = ['r', 'g', 'b', 'y', 'k', 'c', 'orange']):
         polar  = group_polar(self.TWA, self.TWS, self.BSP, speedbins, anglebins, fct = fct)
-        if ax is None:
-            fig = plt.figure()
-            fig.canvas.set_window_title('Polardiagramm')
-            ax, ax_original = setup_polar_plot(fig)
-            
-        plot_polar(ax, polar, speedbins, anglebins, color = color)
-        return ax
+        fig = plt.figure()
+        fig.canvas.set_window_title('Polardiagramm')
+        aux, ax_original = setup_polar_plot(fig, ax)
+        # Should plot_polr offer all these option and return all this stuff?
+        # Maybe just better one off shot ax=111 simple plot?
+        plot_polar(aux, polar, speedbins, anglebins, color = color)
+        return fig
     
         
     def add_rowing_old_format(self, filename, verbose = True):

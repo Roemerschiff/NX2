@@ -1,5 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.transforms import Affine2D
+import mpl_toolkits.axisartist.floating_axes as floating_axes
+import mpl_toolkits.axisartist.angle_helper as angle_helper
+from matplotlib.projections import PolarAxes
+from mpl_toolkits.axisartist.grid_finder import FixedLocator, MaxNLocator, \
+     DictFormatter
 
 from math_functions import *
 
@@ -64,7 +70,7 @@ def sail(data):
     return sail & norow
 
 def near_const(arr, max_diff = 0.01):
-    '''mark regiosn with small gradiant in `arr`
+    '''mark regions with small gradiant in `arr`
 
     This is esssentially `abs(np.diff(arr)) < max_diff` with one element
     added, so that input and output have the same number of elements.
@@ -148,13 +154,13 @@ def plot_polar(ax, polardata, speedbins, anglebins, color = ['r', 'g', 'b', 'y',
         polar_plot_half_circle(ax, np.deg2rad(anglebins[0:-1]+np.diff(anglebins)/2.), polardata[i,1:], color = color[i], lw = 3, label='{0:3.1f}-{1:3.1f} kn'.format(speedbins[i-1], speedbins[i]))
     temp = ax.legend(loc='lower left')
 
-def setup_polar_plot(fig, axtuple = (1,1,1)):
+def setup_polar_plot(fig, axtuple = 111):
     '''setup a polar plot (axis,  labels etc.)
 
     Parameters
     ----------
     fig : matplotlib figure instance
-    axtuple : tuple
+    axtuple : string or number
         defines how the ax containes is placed in ``fig``
 
     Returns
