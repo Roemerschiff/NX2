@@ -304,13 +304,12 @@ class NX2Table(atpy.Table):
         return fig
  
     def plot_polar(self, fct = np.median, speedbins = np.array([0.,2.,4.,6.,8.,10.,12.]), anglebins = np.arange(0., 181., 15.001), color = ['r', 'g', 'b', 'y', 'k', 'c', 'orange']):
-        polar  = group_polar(self.TWA, self.TWS, self.BSP, speedbins, anglebins, fct = fct)
+        polardata  = group_polar(self.TWA, self.TWS, self.BSP, speedbins, anglebins, fct=fct)
         fig = plt.figure()
         fig.canvas.set_window_title('Polardiagramm')
-        aux, ax_original = setup_polar_plot(fig, ax)
-        # Should plot_polr offer all these option and return all this stuff?
-        # Maybe just better one off shot ax=111 simple plot?
-        plot_polar(aux, polar, speedbins, anglebins, color = color)
+        aux, ax_original = setup_polar_plot(fig, 111)
+        plot_polar(aux, polardata, speedbins, anglebins)
+        
         return fig
     
         

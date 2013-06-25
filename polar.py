@@ -137,24 +137,17 @@ def plot_polar(ax, polardata, speedbins, anglebins, color = ['r', 'g', 'b', 'y',
     speedbins : ndarray
         bin boundaries for speed binning
     anglebins : ndarray
-        bin boundaries for angle binning.
+        bin boundaries for angle binning in deg
         Make sure that 180. is included in last bin and not on the boundary.
     color : array
         matplotlic colors used for plotting the line in the diagram
 
-    Returns
-    -------
-    fig : matplotlib.figure
-        A reference to the figure made for further modification.
-    ax : matplotlib.axes
-        A reference to the axes container with the plot for further modification.
-
     '''
     for i in np.arange(1, len(speedbins)):
-        polar_plot_half_circle(ax, np.deg2rad(anglebins[0:-1]+np.diff(anglebins)/2.), polardata[i,1:], color = color[i], lw = 3, label='{0:3.1f}-{1:3.1f} kn'.format(speedbins[i-1], speedbins[i]))
-    temp = ax.legend(loc='lower left')
+        polar_plot_half_circle(ax, anglebins[0:-1]+np.diff(anglebins)/2., polardata[i,1:], color = color[i], lw = 3, label='{0:3.1f}-{1:3.1f} kn'.format(speedbins[i-1], speedbins[i]))
+    temp = ax.legend(loc='upper right')
 
-def setup_polar_plot(fig, axtuple = 111):
+def setup_polar_plot(fig, axtuple = 111, maxr = 5.):
     '''setup a polar plot (axis,  labels etc.)
 
     Parameters
@@ -180,7 +173,7 @@ def setup_polar_plot(fig, axtuple = 111):
     # scale degree to radians
     tr_scale = Affine2D().scale(np.pi/180., 1.)
     tr = tr_rotate + tr_flip + tr_scale + PolarAxes.PolarTransform()
-    grid_helper = floating_axes.GridHelperCurveLinear(tr, extremes=(0,180,0,5.) )
+    grid_helper = floating_axes.GridHelperCurveLinear(tr, extremes=(0,180,0,maxr) )
     ax1 = floating_axes.FloatingSubplot(fig, axtuple, grid_helper=grid_helper)
     fig.add_subplot(ax1)
 
