@@ -12,8 +12,6 @@ from scipy.io import readsav
 
 import NX2
 
-
-
 def date_from_filename(filename):
     f = os.path.basename(filename)
     match = re.match('[0-9]+', f)
@@ -51,10 +49,10 @@ def read_06(datapath):
     with warnings.catch_warnings():
         dat0651 = NX2.NX2Table(os.path.join(datapath, '2006/fifth-day-no-sail23-06-2006.00.csv'), (23,06,2006), origin = (49.0164, 12.0285), corr_bsp = 1./0.9, verbose = False)
         dat0651.add_rowing_old_format(os.path.join(datapath, '2006/Ruderschlaege.csv'), verbose = False)
-        NX2.remove_Danube_current(dat0651)
+        NX2.NX2.remove_Danube_current(dat0651)
         dat0661 = NX2.NX2Table(os.path.join(datapath, '2006/sixth-day-with-sail24-06-2006.00.csv'), (24,06,2006), origin = (49.0164, 12.0285), corr_bsp = 1./0.9, verbose = False)
         dat0661.add_rowing_old_format(os.path.join(datapath, '2006/Ruderschlaege.csv'), verbose = False)
-        NX2.remove_Danube_current(dat0661)
+        NX2.NX2.remove_Danube_current(dat0661)
         dat0651.append(dat0661)
     return dat0651
 

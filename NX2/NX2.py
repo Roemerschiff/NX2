@@ -16,12 +16,59 @@ import matplotlib.dates
 
 import asciitable
 import atpy
-from atpy.registry import register_reader
 
-from math_functions import *
-from polar import setup_polar_plot, plot_polar, group_polar
+from . import math
+from . import polar
 
 mps2knots = 0.51444  # factor to convert m/s to knots
+
+# Module level class and func for kml file support
+class OriginError(Exception):
+    pass
+    
+def write_leg(data, kmlFile, ind, name ='', style = '#yellowLine', skip = 1):
+    '''write one leg of the journel to a kml file.
+
+    This does not write complete kml files, neither does it open the
+    file!
+
+    Parameters:
+    -----------
+    data : NX2 instance
+        `LAT` and `LON` are taken from this instance.
+    kmlFile : file handle
+    ind : index array
+        indexed values are written in this leg
+    name : string , optional
+        Name of this leg in kml file
+    style : string , optional
+        name of a line stype defined in the kml header
+    skip : ind
+        Skips `skip` values befroe a new position is written.
+        Use for coarser, but smaller files.
+    '''
+    LAT = data.LAT[ind]
+    LON = data.LON[ind]
+    latchange = np.hstack([True,np.diff(LAT) != 0.])
+    lonchange = np.hstack([True,np.diff(LON) != 0.])
+    change = (latchange | lonchange).nonzero()
+    kmlFile.write('      <Placemark>')
+    kmlFile.write('        <name>'+name+'</name>')
+    kmlFile.write('        <description>Start:'+str(data.datetime()[ind[0]]) +'</description>')
+    kmlFile.write('        <styleUrl>'+style+'</styleUrl>')
+    kmlFile.write('        <LineString>')
+    kmlFile.write('          <extrude>1</extrude>')
+    kmlFile.write('          <tessellate>1</tessellate>')
+    kmlFile.write('          <altitudeMode>absolute</altitudeMode>')
+    kmlFile.write('          <coordinates>\n')
+    for i in change[0][::skip]:
+        kmlFile.write('          {0:10.7f}, {1:10.7f}\n'.format(LON[i], LAT[i]))
+    kmlFile.write('        </coordinates>')
+    kmlFile.write('      </LineString>')
+    kmlFile.write('    </Placemark>\n')
+
+
+# here make the NX2data class
 
 class NX2InterpolationWarning(UserWarning):
     '''Warning class for interpolation of data columns.
@@ -111,61 +158,12 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2, 
     self.add_column('x', 2.*np.pi*r_earth*np.cos(self.LAT/180.*np.pi)/360.*(self.LON-self.origin[1]))
 
     self.BSP = self.BSP * corr_bsp
-    #self.write_kml(self.filename+'.kml')
-
-register_reader('nx2', read_NX2, override = True)
 
 def sec2hms(sec):
     h, rest = divmod(sec,3600)
     m, rest = divmod(rest, 60)
     s, rest = divmod(rest, 1)
     return h, m, s
-
-    
-def write_leg(data, kmlFile, ind, name ='', style = '#yellowLine', skip = 1):
-    '''write one leg of the journel to a kml file.
-
-    This does not write complete kml files, neither does it open the
-    file!
-
-    Parameters:
-    -----------
-    data : NX2 instance
-        `LAT` and `LON` are taken from this instance.
-    kmlFile : file handle
-    ind : index array
-        indexed values are written in this leg
-    name : string , optional
-        Name of this leg in kml file
-    style : string , optional
-        name of a line stype defined in the kml header
-    skip : ind
-        Skips `skip` values befroe a new position is written.
-        Use for coarser, but smaller files.
-    '''
-    LAT = data.LAT[ind]
-    LON = data.LON[ind]
-    latchange = np.hstack([True,np.diff(LAT) != 0.])
-    lonchange = np.hstack([True,np.diff(LON) != 0.])
-    change = (latchange | lonchange).nonzero()
-    kmlFile.write('      <Placemark>')
-    kmlFile.write('        <name>'+name+'</name>')
-    kmlFile.write('        <description>Start:'+str(data.datetime()[ind[0]]) +'</description>')
-    kmlFile.write('        <styleUrl>'+style+'</styleUrl>')
-    kmlFile.write('        <LineString>')
-    kmlFile.write('          <extrude>1</extrude>')
-    kmlFile.write('          <tessellate>1</tessellate>')
-    kmlFile.write('          <altitudeMode>absolute</altitudeMode>')
-    kmlFile.write('          <coordinates>\n')
-    for i in change[0][::skip]:
-        kmlFile.write('          {0:10.7f}, {1:10.7f}\n'.format(LON[i], LAT[i]))
-    kmlFile.write('        </coordinates>')
-    kmlFile.write('      </LineString>')
-    kmlFile.write('    </Placemark>\n')
-
-class OriginError(Exception):
-    pass
-    
 
 class NX2Table(atpy.Table):
   
@@ -231,7 +229,7 @@ class NX2Table(atpy.Table):
         con1 = (self.BSP > 0)  #moving
         con2 = (np.abs(self.COG - self.HDC) < 15.)
         #SOG and BSP have different resonse times -> ignore gradients
-        smoothed = smooth_gauss(self.BSP, 3.)
+        smoothed = math.smooth_gauss(self.BSP, 3.)
         con3 = (abs(np.diff(smoothed)) < 0.01) # careful! n-1 elements!
         myl = con3.tolist()
         myl.append([True])
@@ -304,11 +302,11 @@ class NX2Table(atpy.Table):
         return fig
  
     def plot_polar(self, fct = np.median, speedbins = np.array([0.,2.,4.,6.,8.,10.,12.]), anglebins = np.arange(0., 181., 15.001), color = ['r', 'g', 'b', 'y', 'k', 'c', 'orange']):
-        polardata  = group_polar(self.TWA, self.TWS, self.BSP, speedbins, anglebins, fct=fct)
+        polardata  = polar.group(self.TWA, self.TWS, self.BSP, speedbins, anglebins, fct=fct)
         fig = plt.figure()
         fig.canvas.set_window_title('Polardiagramm')
-        aux, ax_original = setup_polar_plot(fig, 111)
-        plot_polar(aux, polardata, speedbins, anglebins)
+        aux, ax_original = polar.setup_plot(fig, 111)
+        polar.plot(aux, polardata, speedbins, anglebins)
         
         return fig
     
@@ -449,7 +447,7 @@ def remove_Danube_current(data):
     if np.abs(data.origin[1]-12.0285) > 0.0001:
         raise OriginError('Longitude of origin does not match origin of Schwaller data')      
         
-    schwaller = readsav(os.path.join(os.path.dirname(__file__), 'stromgeschwindigkeit.sav'))['strom']
+    schwaller = readsav(os.path.join(os.path.dirname(__file__), 'data', 'stromgeschwindigkeit.sav'))['strom']
     xy = np.vstack((schwaller['X'][0],schwaller['Y'][0])).transpose()
     schwallervx = scipy.interpolate.NearestNDInterpolator(xy, schwaller['VX'][0])
     schwallervy = scipy.interpolate.NearestNDInterpolator(xy, schwaller['VY'][0])

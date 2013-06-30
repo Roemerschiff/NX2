@@ -1,3 +1,8 @@
+'''Module with a few mathematical definitions
+
+This mudule collects a few simple, mathematical functions to treat
+data smoothing or the handling of angles.
+'''
 import numpy as np
 import scipy.stats
 from scipy.signal import convolve

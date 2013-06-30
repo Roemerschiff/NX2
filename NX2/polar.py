@@ -1,3 +1,11 @@
+'''Module for polar plots
+
+This module collects all functions necessary for polar plots, 
+ranging from the gridding for angles and wind speeds into an array
+(:func:`NX2.polar.grid`) to the plotting (:func:`NX2.polar.plot`).
+This also includes some of the filters that are mainly used for polar
+plots (e.g. :func:`NX2.polar.sail`).
+'''
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.transforms import Affine2D
@@ -7,10 +15,13 @@ from matplotlib.projections import PolarAxes
 from mpl_toolkits.axisartist.grid_finder import FixedLocator, MaxNLocator, \
      DictFormatter
 
-from math_functions import *
+from . import math
 
-def polar_grid(angle, wind, bsp, speedbins, anglebins, fig = None):
-    '''Group data in bins according to wind angle and wind speed.
+def grid(angle, wind, bsp, speedbins, anglebins, fig = None):
+    '''Plot a grid of data in bins according to wind angle and wind speed.
+
+    The makes a grid of plots showing the distribution of the BSP in each
+    ``angle`` and ``wind`` bin.
 
     Parameters
     ----------
@@ -26,8 +37,7 @@ def polar_grid(angle, wind, bsp, speedbins, anglebins, fig = None):
         bin boundaries for angle binning.
         Make sure that 180. is included in last bin and not on the boundary.
     fig : matplotlib.figure instance
-
-
+        If ``None``, a new figure instance is created.
     '''
     if fig is None:
         fig = plt.figure()
@@ -47,8 +57,6 @@ def polar_grid(angle, wind, bsp, speedbins, anglebins, fig = None):
             if i ==1:
                 ax.set_title('{0:3.0f}-{1:3.0f} deg'.format(anglebins[j-1], anglebins[j]))
 
-#polar_grid(d11.TWA, d11.TWS, d11.BSP, np.array([0.,2.,4.,6.,8.,10.,12.]), np.arange(0., 181., 15.001))
-
 def sail(data):
     '''mark sailing only regions
 
@@ -65,14 +73,14 @@ def sail(data):
     sail : array of boolean
         True, if vessel was sailing AND not rowing.
     '''
-    sail =  smooth_gauss(data['sailing'],20) > 0.99
+    sail =  math.smooth_gauss(data['sailing'],20) > 0.99
     norow = np.abs(data['rowpermin']) < 0.01
     return sail & norow
 
 def near_const(arr, max_diff = 0.01):
-    '''mark regions with small gradiant in `arr`
+    '''mark regions with small gradiant in ``arr``
 
-    This is esssentially `abs(np.diff(arr)) < max_diff` with one element
+    This is esssentially ``np.abs(np.diff(arr)) < max_diff`` with one element
     added, so that input and output have the same number of elements.
 
     Parameters
@@ -87,9 +95,7 @@ def near_const(arr, max_diff = 0.01):
     myl.append([con[-1]])
     return np.array(myl)
 
-#TWSs = smooth_expdec(d11['TWS'], 10)
-
-def group_polar(angle, wind, bsp, speedbins, anglebins, fct = np.median):
+def group(angle, wind, bsp, speedbins, anglebins, fct = np.median):
     '''Group data in bins according to wind angle and wind speed.
 
     Parameters
@@ -125,7 +131,7 @@ def group_polar(angle, wind, bsp, speedbins, anglebins, fct = np.median):
             polar[i,j] = fct(bsp[(digspeed==i) & (digangle==j)])     
     return polar
 
-def plot_polar(ax, polardata, speedbins, anglebins, color = ['r', 'g', 'b', 'y', 'k', 'c', 'orange']):
+def plot(ax, polardata, speedbins, anglebins, color = ['r', 'g', 'b', 'y', 'k', 'c', 'orange']):
     '''Make a polar plot and label it for data in bins.
 
     Parameters
@@ -144,10 +150,12 @@ def plot_polar(ax, polardata, speedbins, anglebins, color = ['r', 'g', 'b', 'y',
 
     '''
     for i in np.arange(1, len(speedbins)):
-        polar_plot_half_circle(ax, anglebins[0:-1]+np.diff(anglebins)/2., polardata[i,1:], color = color[i], lw = 3, label='{0:3.1f}-{1:3.1f} kn'.format(speedbins[i-1], speedbins[i]))
+        plot_half_circle(ax, anglebins[0:-1]+np.diff(anglebins)/2., polardata[i,1:],
+                               color = color[i], lw = 3, 
+                               label='{0:3.1f}-{1:3.1f} kn'.format(speedbins[i-1], speedbins[i]))
     temp = ax.legend(loc='upper right')
 
-def setup_polar_plot(fig, axtuple = 111, maxr = 5.):
+def setup_plot(fig, axtuple = 111, maxr = 5.):
     '''setup a polar plot (axis,  labels etc.)
 
     Parameters
@@ -178,17 +186,11 @@ def setup_polar_plot(fig, axtuple = 111, maxr = 5.):
     fig.add_subplot(ax1)
 
     # adjust axis
-    #ax1.axis["left"].set_axis_direction("bottom")
-    #ax1.axis["left"].major_ticklabels.set_axis_direction("left")
-    #ax1.axis["right"].set_axis_direction("top")
     ax1.axis["right"].major_ticklabels.set_axis_direction("left")
     ax1.axis["right"].major_ticklabels.set_visible(True)
 
     ax1.axis["bottom"].set_visible(False)
     ax1.axis["top"].set_axis_direction("top")
-    #ax1.axis["top"].toggle(ticklabels=True, label=True)
-    #ax1.axis["top"].major_ticklabels.set_axis_direction("top")
-    #ax1.axis["top"].label.set_axis_direction("top")
 
     ax1.grid()
 
@@ -203,8 +205,18 @@ def setup_polar_plot(fig, axtuple = 111, maxr = 5.):
                         # prevent this.
     return aux_ax, ax1
 
-def polar_plot_half_circle(ax, theta, r, **kwargs):
-    '''extends ``theta`` and ``r`` to touch the final bin boundaries, then plots'''
+def plot_half_circle(ax, theta, r, **kwargs):
+    '''extends ``theta`` and ``r`` to touch the final bin boundaries, then plots
+
+    Parameters
+    ----------
+    ax : mpl.Axis instance
+    theta : np.ndarray
+        angles in degrees
+    r : np.ndarray
+        radius values for plot
+    See ``plt.plot`` for a list of accepted keyword arguments.
+    '''
     extended_theta = np.hstack([0, theta, 180.])
     extended_r = np.hstack([r[0], r, r[-1]])
     temp = ax.plot(extended_theta, extended_r, **kwargs)
