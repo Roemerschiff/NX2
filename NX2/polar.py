@@ -9,8 +9,8 @@ plots (e.g. :func:`NX2.polar.sail`).
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.transforms import Affine2D
-import mpl_toolkits.axisartist.floating_axes as floating_axes
-import mpl_toolkits.axisartist.angle_helper as angle_helper
+from mpl_toolkits.axisartist import floating_axes
+from mpl_toolkits.axisartist import angle_helper
 from matplotlib.projections import PolarAxes
 from mpl_toolkits.axisartist.grid_finder import FixedLocator, MaxNLocator, \
      DictFormatter

@@ -93,13 +93,19 @@ class NX2RowingWarning(UserWarning):
 def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2, verbose = True):
     '''read in csv data and initialize table
     
-    :param filename: filename as string or other input compatible with asciitable
-    :param date: date of measurement
-    :type date: tuple of integers ``(day, month, year)``
-    :keyword corr_bsp: multiplictive correction factor for BSP
-    :keyword origin:tuple (lat, lon) in deg of x,y origin
+    Parameters
+    ----------
+    filename : string
+        filename as string or other input compatible with asciitable
+    date: tuple of integers ``(day, month, year)``
+        date of measurement
+    corr_bsp: float 
+        multiplictive correction factor for BSP
+    origin: tuple 
+        (lat, lon) in deg of x,y origin
         default: lat, lon at first datapoint
-    :keyword timeoffset: hours to be added to convert UT to local
+    timeoffset: float
+        hours to be added to convert UT to local
     '''
     include_names = ['TIME', 'LAT', 'LON', 'AWA', 'AWS', 'BSP', 'COG', 'DFT', 'HDC', 'SET', 'SOG', 'TWA', 'TWS']
     converters = {'TIME': asciitable.convert_list(float)}
@@ -166,7 +172,8 @@ def sec2hms(sec):
     return h, m, s
 
 class NX2Table(atpy.Table):
-  
+    '''Basic catalog object.
+    '''
     def __init__(self, *args, **kwargs):
         if len(args) == 1:
             raise ValueError('Filename and date tuple required.')
@@ -175,9 +182,17 @@ class NX2Table(atpy.Table):
         atpy.Table.__init__(self, *args, **kwargs)
     
     def datetime(self):
+        '''Return an np.array of ``datetime.datetime`` object for each data point
+
+        Useful for plotting, so matplotlib can label the x-axis correctly.
+        '''
         return np.array(map(datetime.datetime, self.year, self.month, self.day, self.hour, self.minute, self.sec))
 
     def time(self):
+        '''Return an np.array of ``datetime.time`` object for each data point
+
+        Useful for plotting, so matplotlib can label the x-axis correctly.
+        '''
         return np.array(map(datetime.time, self.hour, self.minute, self.sec))
     
     def fill_nans(self, column):
@@ -203,6 +218,13 @@ class NX2Table(atpy.Table):
         return new_table
         
     def when(self, t1=(0,0,0),t2=(23,59,59)):
+        '''Select a subset of the table
+        
+        Parameters
+        ----------
+        t1, t2 : tuple
+            Start and end time in the form ``(h, m, s)``
+        '''
         ind = (self.time() >= datetime.time(*t1)) & (self.time() <= datetime.time(*t2))
         return self.where(ind)
     
@@ -211,8 +233,8 @@ class NX2Table(atpy.Table):
         
         Only points which fullfill the following criteria are used:
         
-            - BSP > 0
-            - |COG-HDC| < 15
+            - ``BSP > 0``
+            - ``np.abs(COG-HDC) < 15``
             - small gradients in speed
         
         Returns
@@ -243,6 +265,8 @@ class NX2Table(atpy.Table):
 
 
     def plot_course(self, scale = 50, n = 300):
+        '''Return an x/y overview plot of boat path, wind and speeds
+        '''
         fig = plt.figure()
         fig.canvas.set_window_title('Kurs und Windrichtung')
         ax = fig.add_subplot(111)
@@ -271,6 +295,8 @@ class NX2Table(atpy.Table):
         return fig
         
     def plot_speeds(self, t1=(0,0,0),t2=(23,59,59)):
+        '''Return a figure that shows BSP, SOG and rowing (if posible)
+        '''
         fig = plt.figure()
         fig.canvas.set_window_title('Bootsgeschwindigkeit')
         ax = fig.add_subplot(111)
@@ -302,6 +328,7 @@ class NX2Table(atpy.Table):
         return fig
  
     def plot_polar(self, fct = np.median, speedbins = np.array([0.,2.,4.,6.,8.,10.,12.]), anglebins = np.arange(0., 181., 15.001), color = ['r', 'g', 'b', 'y', 'k', 'c', 'orange']):
+        '''Return a polar plot'''
         polardata  = polar.group(self.TWA, self.TWS, self.BSP, speedbins, anglebins, fct=fct)
         fig = plt.figure()
         fig.canvas.set_window_title('Polardiagramm')
@@ -405,18 +432,7 @@ Fragen an: Moritz.guenther@hs.uni-hamburg.de</description>
                 write_leg(self, kmlFile, np.arange(len(self)), style = '#yellowLine')
             kmlFile.write('  </Document>')
             kmlFile.write('</kml>')
-        if verbose: print 'Wrote kml file: '+filename
-
-def test(x,y):
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M:%S', tz=None))
-        row = ax.bar(x,y, label='Ruderschläge', width=1./24./60.)
-        xlab = ax.get_xticklabels()
-        for label in xlab: label.set_rotation(30)
-        import pdb
-        pdb.set_trace()
-        
+        if verbose: print 'Wrote kml file: '+filename        
 
 def remove_Danube_current(data):
     '''read Danube current simulation and transform data basis system
@@ -424,7 +440,7 @@ def remove_Danube_current(data):
     This procedure read a current simulation of the Danube current in the
     region north of Regensburg, where the Navis Lusoria was tested in 2006.
     It adds 2 columns to the NX2 table, that contain the current in the x,y
-    coordinate system (measured west-> east and south_> north) at each 
+    coordinate system (measured west-> east and south-> north) at each 
     position of the ship.
     Then, the speed over ground (contained in SOG and COG) is transformed into
     a coordinate system that moves with the water. Thus, after this procedure, 

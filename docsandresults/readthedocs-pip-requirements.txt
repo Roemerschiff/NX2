@@ -1,0 +1,5 @@
+numpydoc==0.4
+scipy
+atpy
+asciitable
+matplotlib

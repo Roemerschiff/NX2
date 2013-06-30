@@ -1,6 +1,6 @@
 '''Module with a few mathematical definitions
 
-This mudule collects a few simple, mathematical functions to treat
+This module collects a few simple, mathematical functions to treat
 data smoothing or the handling of angles.
 '''
 import numpy as np
@@ -36,7 +36,7 @@ def smooth_gauss(data, width):
     data : np.ndarray
         input array to be smoothed
     t_e : int
-         decay timescale of expoential in number of bins
+         decay timescale of exponential in number of bins
          (for NX2 data, i.e. seconds)
 
     Returns
@@ -55,7 +55,7 @@ def bearingdiff180(a, b):
     There are two complications here compared to the usual ``a-b``:
 
         - The angle wraps around at 360 deg.
-        - A-priory it's ot clear if the shortest difference between two
+        - A-priory it's not clear if the shortest difference between two
           bearings is clockwise or anti-clockwise.
 
     Parameters
