@@ -74,7 +74,7 @@ def sail(data):
         True, if vessel was sailing AND not rowing.
     '''
     sail =  math.smooth_gauss(data['sailing'],20) > 0.99
-    norow = np.abs(data['rowpermin']) < 0.01
+    norow = math.smooth_gauss(np.abs(data['rowpermin']), 20) < 0.01
     return sail & norow
 
 def near_const(arr, max_diff = 0.01):
