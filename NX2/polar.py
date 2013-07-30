@@ -126,7 +126,7 @@ def group(angle, wind, bsp, speedbins, anglebins, fct = np.median):
     digspeed = np.digitize(wind, speedbins)
     digangle = np.digitize(np.abs(angle),anglebins)
     polar = np.zeros([len(speedbins)+1, len(anglebins)])
-    for i in np.arange(1, len(speedbins)):
+    for i in np.arange(1, len(speedbins)+1):
         for j in np.arange(1, len(anglebins)):
             polar[i,j] = fct(bsp[(digspeed==i) & (digangle==j)])     
     return polar
@@ -146,7 +146,7 @@ def plot(ax, polardata, speedbins, anglebins, color = ['r', 'g', 'b', 'y', 'k', 
         bin boundaries for angle binning in deg
         Make sure that 180. is included in last bin and not on the boundary.
     color : array
-        matplotlic colors used for plotting the line in the diagram
+        matplotlib colors used for plotting the line in the diagram
 
     '''
     for i in np.arange(1, len(speedbins)):
@@ -173,11 +173,11 @@ def setup_plot(fig, axtuple = 111, maxr = 5.):
     # flip
     matrix = np.identity(3)
     matrix[0,0] = -1
-    matrix[1,1] = -1
+    #matrix[1,1] = -1
     tr_flip = Affine2D(matrix = matrix)
 
     # rotate
-    tr_rotate = Affine2D().translate(90, 0)
+    tr_rotate = Affine2D().translate(-90, 0)
     # scale degree to radians
     tr_scale = Affine2D().scale(np.pi/180., 1.)
     tr = tr_rotate + tr_flip + tr_scale + PolarAxes.PolarTransform()
