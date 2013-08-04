@@ -155,7 +155,7 @@ def plot(ax, polardata, speedbins, anglebins, color = ['r', 'g', 'b', 'y', 'k', 
                                label='{0:3.1f}-{1:3.1f} kn'.format(speedbins[i-1], speedbins[i]))
     temp = ax.legend(loc='upper right')
 
-def setup_plot(fig, axtuple = 111, maxr = 5.):
+def setup_plot(fig, axtuple = 111, maxr = 5., returnall = False):
     '''setup a polar plot (axis,  labels etc.)
 
     Parameters
@@ -163,12 +163,15 @@ def setup_plot(fig, axtuple = 111, maxr = 5.):
     fig : matplotlib figure instance
     axtuple : string or number
         defines how the ax containes is placed in ``fig``
+    returnall : boolean
+        If true, return additional output
 
     Returns
     -------
     aux_ax1 : matplotlib
         Plot in this auxiliary axis (angle in degrees)
     ax : matplot.axis instance
+    
     '''
     # flip
     matrix = np.identity(3)
@@ -181,7 +184,9 @@ def setup_plot(fig, axtuple = 111, maxr = 5.):
     # scale degree to radians
     tr_scale = Affine2D().scale(np.pi/180., 1.)
     tr = tr_rotate + tr_flip + tr_scale + PolarAxes.PolarTransform()
-    grid_helper = floating_axes.GridHelperCurveLinear(tr, extremes=(0,180,0,maxr) )
+    grid_locator1 = MaxNLocator(6)
+    grid_helper = floating_axes.GridHelperCurveLinear(tr, extremes=(0,180,0,maxr), grid_locator1=grid_locator1 )
+
     ax1 = floating_axes.FloatingSubplot(fig, axtuple, grid_helper=grid_helper)
     fig.add_subplot(ax1)
 
@@ -203,7 +208,10 @@ def setup_plot(fig, axtuple = 111, maxr = 5.):
                         # drawn twice, and possibly over some other
                         # artists. So, we decrease the zorder a bit to
                         # prevent this.
-    return aux_ax, ax1
+    if returnall:
+        return aux_ax, ax1, grid_helper
+    else:
+        return aux_ax, ax1
 
 def plot_half_circle(ax, theta, r, **kwargs):
     '''extends ``theta`` and ``r`` to touch the final bin boundaries, then plots
