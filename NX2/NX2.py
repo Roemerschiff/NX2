@@ -288,8 +288,8 @@ class NX2Table(atpy.Table):
         else:
             qk_scale = scale/20.
         qk_wind = ax.quiverkey(quiver_wind, .1, 0.95, qk_scale, 'Wind', labelpos='E')
-        qk_bsp = ax.quiverkey(quiver_bsp, .1, 0.9, qk_scale, 'Fahrt im Wasser (ohne Drift)', labelpos='E')
-        qk_sog = ax.quiverkey(quiver_sog, .1, 0.85, qk_scale, u'Bewegung über Grund', labelpos='E')
+        qk_bsp = ax.quiverkey(quiver_bsp, .1, 0.9, qk_scale, 'Fahrt durchs Wasser (ohne Drift)', labelpos='E')
+        qk_sog = ax.quiverkey(quiver_sog, .1, 0.85, qk_scale, u'Fahrt über Grund', labelpos='E')
         ax.set_xlabel('West - Ost [Meter]')
         ax.set_ylabel(u'Süd - Nord [Meter]')
         return fig
