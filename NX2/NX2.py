@@ -165,6 +165,9 @@ def read_NX2(self, filename, date, corr_bsp = 1.,origin = None, timeoffset = 2, 
 
     self.BSP = self.BSP * corr_bsp
 
+    self.TWS = self.TWS / mps2knots
+    self.AWS = self.AWS / mps2knots
+
 def sec2hms(sec):
     h, rest = divmod(sec,3600)
     m, rest = divmod(rest, 60)
@@ -278,7 +281,7 @@ class NX2Table(atpy.Table):
                 if sail ==1 :
                   index = list(ind)
                   ax.plot(self.x[index], self.y[index],'b')
-        wind_v = self.TWS / mps2knots
+        wind_v = self.TWS
         wind_ang = self.TWA + self.HDC + 180.
         quiver_wind = ax.quiver(self.x[::n],self.y[::n], self.TWS[::n]*np.sin(wind_ang[::n]/180.*np.pi), self.TWS[::n]*np.cos(wind_ang[::n]/180.*np.pi), scale = scale, color= 'g')
         quiver_bsp  = ax.quiver(self.x[::n],self.y[::n], self.BSP[::n]*np.sin(self.HDC[::n]/180.*np.pi), self.BSP[::n]*np.cos(self.HDC[::n]/180.*np.pi), scale = scale)
