@@ -14,44 +14,18 @@ Projekt Römerschiff / Roman warship project
    
    **Deutsch**
        Diese Webseite enthält Inhalte in deutscher und in englischer Sprache. Der 
-       Programmcode und die zugehörige Dokumentation sind in englisch verfasst, die
+       Programmcode und die zugehörige Dokumentation sind in Englisch verfasst, die
        Auswertung der Ergebnisse ist auf Deutsch präsentiert.
 
 Auswertung
 ==========
 
 .. toctree::
-   :maxdepth: 1
-   
-   years/list2008
-   years/list2011
-   years/list2012
-   
-   results/Auswertung2012_Haltern
+    
+   results/index
+   years/index
+   docs/index
 
-Übersichtskarten und Fahrtstrecken
-==================================
-
-Auf den folgenden Seiten konnt ihr euch die Fahrtroute der Römerschiffe für jeden einzelnen Tag anschauen. Ich habe die Daten nach Jahren sortiert. Zu jeder Fahrt, die wir gemacht haben, gibt es einen Link der die Route direkt in `Google maps <http://maps.google.de>`_ anzeigt und einen um die kml Datei herunterzuladen, falls ihr `Google Earth <http://www.google.com/earth/index.html>`_ bei Euch auf dem Rechner installiert habt.
-
-.. toctree::
-   :maxdepth: 1
-   
-   years/list2008
-   years/list2011
-   years/list2012
-
-Software documentation
-======================
-
-
-
-.. toctree::
-   :maxdepth: 2
-
-   docs/nx2
-   docs/polar
-   docs/math   
 
 Index und Suche / Index and search
 ==================================
