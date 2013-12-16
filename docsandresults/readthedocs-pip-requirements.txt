@@ -1,5 +1,6 @@
 numpydoc==0.4
 scipy
+astropy
 atpy
 asciitable
 matplotlib

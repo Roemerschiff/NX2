@@ -10,12 +10,12 @@ Projekt Römerschiff / Roman warship project
    **English**
        This website contains both German and English content. While the software
        is documented in English as it is customary in programming, the analysis
-       and the restlts are mostly show in German.
+       and the results are mostly show in German.
    
    **Deutsch**
        Diese Webseite enthält Inhalte in deutscher und in englischer Sprache. Der 
-       Programmcode und due zugehörige Dokumentation sind in englisch verfasst, die
-       Auswertung der Ergebnisse ist auch Deutsch präsentiert.
+       Programmcode und die zugehörige Dokumentation sind in englisch verfasst, die
+       Auswertung der Ergebnisse ist auf Deutsch präsentiert.
 
 Auswertung
 ==========
