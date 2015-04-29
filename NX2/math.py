@@ -7,6 +7,7 @@ import numpy as np
 import scipy.stats
 from scipy.signal import convolve
 
+
 def smooth_expdec(data, t_e):
     '''smooth an array with an exponential decay
 
@@ -28,6 +29,7 @@ def smooth_expdec(data, t_e):
     kernel = kernel / kernel.sum()
     return np.convolve(data, kernel, 'same')
 
+
 def smooth_gauss(data, width):
     '''smooth an array with a gauss
 
@@ -44,10 +46,11 @@ def smooth_gauss(data, width):
     out : np.ndarray
         smoothed array
     '''
-    norm = scipy.stats.norm(0.,width)
+    norm = scipy.stats.norm(0., width)
     kernel = norm.pdf(np.arange(-3.*width, 3.001*width))
     kernel = kernel / kernel.sum()
     return np.convolve(data, kernel, 'same')
+
 
 def bearingdiff180(a, b):
     '''Calculate the smallest difference between two bearings.
@@ -68,4 +71,4 @@ def bearingdiff180(a, b):
     out : float
         smallest difference between ``a`` and ``b`` in the range [-180,180]
     '''
-    return np.mod((b-a) + 180. + 360., 360.) -180.
+    return np.mod((b-a) + 180. + 360., 360.) - 180.

@@ -1,6 +1,6 @@
 '''Module for polar plots
 
-This module collects all functions necessary for polar plots, 
+This module collects all functions necessary for polar plots,
 ranging from the gridding for angles and wind speeds into an array
 (:func:`NX2.polar.grid`) to the plotting (:func:`NX2.polar.plot`).
 This also includes some of the filters that are mainly used for polar
@@ -13,11 +13,12 @@ from mpl_toolkits.axisartist import floating_axes
 from mpl_toolkits.axisartist import angle_helper
 from matplotlib.projections import PolarAxes
 from mpl_toolkits.axisartist.grid_finder import FixedLocator, MaxNLocator, \
-     DictFormatter
+    DictFormatter
 
 from . import math
 
-def grid(angle, wind, bsp, speedbins, anglebins, fig = None):
+
+def grid(angle, wind, bsp, speedbins, anglebins, fig=None):
     '''Plot a grid of data in bins according to wind angle and wind speed.
 
     The makes a grid of plots showing the distribution of the BSP in each
@@ -46,16 +47,18 @@ def grid(angle, wind, bsp, speedbins, anglebins, fig = None):
         raise ValueError('angle, wind and bsp must have same number of elements')
 
     digspeed = np.digitize(wind, speedbins)
-    digangle = np.digitize(np.abs(angle),anglebins)
+    digangle = np.digitize(np.abs(angle), anglebins)
 
     for i in np.arange(1, len(speedbins)):
         for j in np.arange(1, len(anglebins)):
-            ax = fig.add_subplot(len(speedbins)-1, len(anglebins)-1, (i-1) * (len(anglebins)-1) + (j-1) + 1)
-            ax.hist(bsp[(digspeed==i) & (digangle==j)].flatten(), range = [0,6], bins = 12)
+            ax = fig.add_subplot(len(speedbins)-1, len(
+                anglebins)-1, (i-1) * (len(anglebins)-1) + (j-1) + 1)
+            ax.hist(bsp[(digspeed == i) & (digangle == j)].flatten(), range=[0, 6], bins=12)
             if j == 1:
                 ax.set_ylabel('TWS:{0:1.0f}-{1:1.0f}'.format(speedbins[i-1], speedbins[i]))
-            if i ==1:
+            if i == 1:
                 ax.set_title('{0:3.0f}-{1:3.0f} deg'.format(anglebins[j-1], anglebins[j]))
+
 
 def sail(data):
     '''mark sailing only regions
@@ -63,7 +66,7 @@ def sail(data):
     This function determines times with the sail up and no rowing.
     It also cut off the very beginning and end of each sailing phase,
     because in those times the sail was not set perfectly anyway.
-    
+
     Parameters
     ----------
     data : NX2 data
@@ -73,11 +76,12 @@ def sail(data):
     sail : array of boolean
         True, if vessel was sailing AND not rowing.
     '''
-    sail =  math.smooth_gauss(data['sailing'],20) > 0.99
+    sail = math.smooth_gauss(data['sailing'], 20) > 0.99
     norow = math.smooth_gauss(np.abs(data['rowpermin']), 20) < 0.01
     return sail & norow
 
-def near_const(arr, max_diff = 0.01):
+
+def near_const(arr, max_diff=0.01):
     '''mark regions with small gradiant in ``arr``
 
     This is esssentially ``np.abs(np.diff(arr)) < max_diff`` with one element
@@ -88,14 +92,15 @@ def near_const(arr, max_diff = 0.01):
     arr : 1-dim array
     max_diff : np.float
         maximum allowed gradiant between two elements
-    
+
     '''
     con = abs(np.diff(arr)) < max_diff
     myl = con.tolist()
     myl.append([con[-1]])
     return np.array(myl)
 
-def group(angle, wind, bsp, speedbins, anglebins, fct = np.median):
+
+def group(angle, wind, bsp, speedbins, anglebins, fct=np.median):
     '''Group data in bins according to wind angle and wind speed.
 
     Parameters
@@ -124,14 +129,15 @@ def group(angle, wind, bsp, speedbins, anglebins, fct = np.median):
         raise ValueError('angle, wind and bsp must have same number of elements')
 
     digspeed = np.digitize(wind, speedbins)
-    digangle = np.digitize(np.abs(angle),anglebins)
+    digangle = np.digitize(np.abs(angle), anglebins)
     polar = np.zeros([len(speedbins)+1, len(anglebins)])
     for i in np.arange(1, len(speedbins)+1):
         for j in np.arange(1, len(anglebins)):
-            polar[i,j] = fct(bsp[(digspeed==i) & (digangle==j)])     
+            polar[i, j] = fct(bsp[(digspeed == i) & (digangle == j)])
     return polar
 
-def plot(ax, polardata, speedbins, anglebins, color = ['r', 'g', 'b', 'y', 'k', 'c', 'orange']):
+
+def plot(ax, polardata, speedbins, anglebins, color=['r', 'g', 'b', 'y', 'k', 'c', 'orange']):
     '''Make a polar plot and label it for data in bins.
 
     Parameters
@@ -150,12 +156,13 @@ def plot(ax, polardata, speedbins, anglebins, color = ['r', 'g', 'b', 'y', 'k', 
 
     '''
     for i in np.arange(1, len(speedbins)):
-        plot_half_circle(ax, anglebins[0:-1]+np.diff(anglebins)/2., polardata[i,1:],
-                               color = color[i], lw = 3, 
-                               label='{0:3.1f}-{1:3.1f} kn'.format(speedbins[i-1], speedbins[i]))
+        plot_half_circle(ax, anglebins[0:-1]+np.diff(anglebins)/2., polardata[i, 1:],
+                         color=color[i], lw=3,
+                         label='{0:3.1f}-{1:3.1f} kn'.format(speedbins[i-1], speedbins[i]))
     temp = ax.legend(loc='upper right')
 
-def setup_plot(fig, axtuple = 111, maxr = 5., returnall = False):
+
+def setup_plot(fig, axtuple=111, maxr=5., returnall=False):
     '''setup a polar plot (axis,  labels etc.)
 
     Parameters
@@ -171,13 +178,13 @@ def setup_plot(fig, axtuple = 111, maxr = 5., returnall = False):
     aux_ax1 : matplotlib
         Plot in this auxiliary axis (angle in degrees)
     ax : matplot.axis instance
-    
+
     '''
     # flip
     matrix = np.identity(3)
-    matrix[0,0] = -1
-    #matrix[1,1] = -1
-    tr_flip = Affine2D(matrix = matrix)
+    matrix[0, 0] = -1
+    # matrix[1,1] = -1
+    tr_flip = Affine2D(matrix=matrix)
 
     # rotate
     tr_rotate = Affine2D().translate(-90, 0)
@@ -185,7 +192,8 @@ def setup_plot(fig, axtuple = 111, maxr = 5., returnall = False):
     tr_scale = Affine2D().scale(np.pi/180., 1.)
     tr = tr_rotate + tr_flip + tr_scale + PolarAxes.PolarTransform()
     grid_locator1 = MaxNLocator(6)
-    grid_helper = floating_axes.GridHelperCurveLinear(tr, extremes=(0,180,0,maxr), grid_locator1=grid_locator1 )
+    grid_helper = floating_axes.GridHelperCurveLinear(
+        tr, extremes=(0, 180, 0, maxr), grid_locator1=grid_locator1)
 
     ax1 = floating_axes.FloatingSubplot(fig, axtuple, grid_helper=grid_helper)
     fig.add_subplot(ax1)
@@ -203,8 +211,8 @@ def setup_plot(fig, axtuple = 111, maxr = 5., returnall = False):
     ax1.axis["top"].label.set_text(r"Windrichtung")
 
     aux_ax = ax1.get_aux_axes(tr)
-    aux_ax.patch = ax1.patch # for aux_ax to have a clip path as in ax
-    ax1.patch.zorder=0.9 # but this has a side effect that the patch is
+    aux_ax.patch = ax1.patch  # for aux_ax to have a clip path as in ax
+    ax1.patch.zorder = 0.9  # but this has a side effect that the patch is
                         # drawn twice, and possibly over some other
                         # artists. So, we decrease the zorder a bit to
                         # prevent this.
@@ -212,6 +220,7 @@ def setup_plot(fig, axtuple = 111, maxr = 5., returnall = False):
         return aux_ax, ax1, grid_helper
     else:
         return aux_ax, ax1
+
 
 def plot_half_circle(ax, theta, r, **kwargs):
     '''extends ``theta`` and ``r`` to touch the final bin boundaries, then plots
@@ -228,4 +237,3 @@ def plot_half_circle(ax, theta, r, **kwargs):
     extended_theta = np.hstack([0, theta, 180.])
     extended_r = np.hstack([r[0], r, r[-1]])
     temp = ax.plot(extended_theta, extended_r, **kwargs)
-
