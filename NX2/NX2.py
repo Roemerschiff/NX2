@@ -120,7 +120,7 @@ def read_NX2(self, filename, date, corr_bsp=1., origin=None, timeoffset=2, verbo
         atpy.Table.__init__(self, filename, type='ascii', delimiter=',', fill_values=(
             '', 'nan'), data_start = 5, include_names = include_names, guess = False)
         if verbose:
-            print 'Reading new format NX2 table - Export with 1.08'
+            print 'Reading new format NX2 table - Export with 1.08 or later'
     except asciitable.InconsistentTableError:
         if verbose:
             print 'Reading NX2 table, which was exported with 1.05'
