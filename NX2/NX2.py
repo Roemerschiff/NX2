@@ -16,6 +16,7 @@ import matplotlib.dates
 
 import asciitable
 import atpy
+from astropy.io.ascii import InconsistentTableError
 
 from . import math
 from . import polar
@@ -121,7 +122,7 @@ def read_NX2(self, filename, date, corr_bsp=1., origin=None, timeoffset=2, verbo
             '', 'nan'), data_start = 5, include_names = include_names, guess = False)
         if verbose:
             print 'Reading new format NX2 table - Export with 1.08 or later'
-    except asciitable.InconsistentTableError:
+    except InconsistentTableError:
         if verbose:
             print 'Reading NX2 table, which was exported with 1.05'
         # 30 header values, but only 29 table entries, manually delete the last header value
