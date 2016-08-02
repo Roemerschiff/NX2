@@ -4,6 +4,7 @@ import datetime
 import itertools
 from warnings import warn
 from exceptions import UserWarning
+import json
 
 import numpy as np
 import scipy
@@ -415,6 +416,42 @@ class NX2Table(atpy.Table):
         changes, i.e. the first entry within each minute.
         '''
         return np.hstack((np.array([True]), (self.minute[1:] != self.minute[0:-1])))
+    def write_geojson(self, filename):
+        '''write geojson file from a NX2 object
+
+        Parameters
+        ----------
+        filename : string
+            file name or path for output
+        '''
+        geoj =  { "type": "FeatureCollection", "features": []}
+        for sail, group in itertools.groupby(np.arange(
+                    len(self)), lambda k: (self.sailing[k])):
+            leg = { "type": "Feature", "geometry": {"type": "LineString"},
+                    "properties": {}}
+            if sail == 1:
+                leg['properties']['stroke'] = '#ffff00'
+                leg['properties']['description'] = 'Segel gesetzt'
+            elif sail == 0:
+                leg['properties']['description'] = 'kein Segel'
+                leg['properties']['stroke'] = '#ff0000'
+            elif sail == -1:
+                leg['properties']['description'] = 'Mastbruch'
+                leg['properties']['stroke'] = '#00ff00'
+            pos = np.vstack([d['LON'], d['LAT']])
+            # Remove dublicate entries, like those on mooring.
+            ind = [0]
+            for i in range(1, pos.shape[1]):
+                if np.any(pos[:, i] != pos[:, i - 1]):
+                    ind.append(i)
+            pos = pos[:, ind]
+
+            leg['geometry']["coordinates"] = pos.T.tolist()
+
+            geoj['features'].append(leg)
+
+        with open(filename, 'w') as f:
+            json.dump(geoj, f)
 
     def write_kml(self, filename, verbose=True):
         '''write a kml file from an NX2 object
