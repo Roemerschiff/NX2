@@ -217,8 +217,7 @@ class NX2Table(atpy.Table):
 
     def fill_nans(self, column):
         index = np.isfinite(self[column])
-        warn(NX2InterpolationWarning(column, max([len(list(
-            v)) for g, v in itertools.groupby(index) if not g])))
+        warn(NX2InterpolationWarning(column, max([len(list(v)) for g, v in itertools.groupby(index) if not g])))
         if column == 'TIME':
             x = np.arange(len(self), dtype=np.float)
             func = scipy.interpolate.interp1d(x[index], self[column][index], bounds_error=False)
@@ -439,7 +438,8 @@ class NX2Table(atpy.Table):
             elif sail == -1:
                 leg['properties']['description'] = 'Mastbruch'
                 leg['properties']['stroke'] = '#00ff00'
-            pos = np.vstack([d['LON'], d['LAT']])
+            ind = [g for g in group]
+            pos = np.vstack([self['LON'][ind], self['LAT'][ind]])
             # Remove dublicate entries, like those on mooring.
             ind = [0]
             for i in range(1, pos.shape[1]):

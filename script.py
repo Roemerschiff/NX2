@@ -1,16 +1,38 @@
 # -*- coding: utf-8 -*-
 import glob
+import os
 from NX2.NX2 import NX2Table
 
 ## Input for Website
 #make exclude Ruderschlare.csv etc. from csvlist
+datapath = '/Users/hamogu/PersDropbox/NX2/'
+csvlist = glob.glob(datapath + '2008/*_*.csv')
+
+for fil in csvlist:
+    datestr = os.path.basename(fil)
+    dat = NX2Table(fil, (int(datestr[4:6]),int(datestr[2:4]),int(datestr[0:2])))
+    dat.add_rowing_old_format(datapath + '2008/Ruderschlaege.csv')
+    # dat.write_kml(fil + '.kml')
+    dat.write_geojson('/Users/hamogu/code/NX2/docsandresults/source/years/'+os.path.basename(fil) + '.geojson')
+
 csvlist = glob.glob(datapath + '2011/*_*_*_*.csv')
 
 for fil in csvlist:
     datestr = os.path.basename(fil)
     dat = NX2Table(fil, (int(datestr[6:8]),int(datestr[4:6]),int(datestr[0:4])))
     dat.add_rowing_old_format(datapath + '2011/Ruderschlaege2011.csv')
-    dat.write_kml(fil + '.kml')
+    # dat.write_kml(fil + '.kml')
+    dat.write_geojson('/Users/hamogu/code/NX2/docsandresults/source/years/'+os.path.basename(fil) + '.geojson')
+
+csvlist = glob.glob(datapath + '2012/*_*_*_*.csv')
+
+for fil in csvlist:
+    datestr = os.path.basename(fil)
+    dat = NX2Table(fil, (int(datestr[6:8]),int(datestr[4:6]),int(datestr[0:4])))
+    dat.add_rowing_old_format(datapath + '2012/Ruderschlaege2012.csv')
+    # dat.write_kml(fil + '.kml')
+    dat.write_geojson('/Users/hamogu/code/NX2/docsandresults/source/years/'+os.path.basename(fil) + '.geojson')
+
 
 import atpy
 import asciitable
@@ -24,3 +46,5 @@ for fil in tab.col1:
 # Replace + with %2B in html
 
 
+
+https://github.com/hamogu/NX2/blob/master/docsandresults/source/years/geojson/080416thirdday_sail.00.csv.geojson
