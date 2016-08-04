@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 
 
-def plot_speeds(self, t1=(0, 0, 0), t2=(23, 59, 59)):
+def plot_speeds(self, t1=(0, 0, 0), t2=(23, 59, 59), second=['HDC']):
         '''Return a figure that shows BSP, SOG and rowing (if posible)
         '''
         fig = plt.figure()
@@ -38,8 +38,10 @@ def plot_speeds(self, t1=(0, 0, 0), t2=(23, 59, 59)):
             for tl in ax2.get_yticklabels():
                 tl.set_color('r')
 
-        axang.plot(self.datetime()[ind], self.HDC[ind], label='HDC')
-        axang.set_ylim([0, 360])
+        for value in second:
+            axang.plot(self.datetime()[ind], self[value][ind], label=value)
+            if value in ['HDC']:
+                axang.set_ylim([0, 360])
         axang.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M:%S', tz=None))
         for a in [ax, axang]:
             xlab = a.get_xticklabels()
@@ -48,10 +50,10 @@ def plot_speeds(self, t1=(0, 0, 0), t2=(23, 59, 59)):
         return fig
 
 
-def plotall(data, day, t1=(0,0,0), t2=(23,59,59), scale=50, n=300):
+def plotall(data, day, t1=(0,0,0), t2=(23,59,59), scale=50, n=300, secondplot=['HDC']):
     d = data.where(data.day == day)
     d = d.when(t1, t2)
-    plot_speeds(d)
+    plot_speeds(d, second=secondplot)
     d.plot_course(scale=scale, n=n)
 
 def turn_speed(data, day, t1=(0,0,0), t2=(23,59,59)):
