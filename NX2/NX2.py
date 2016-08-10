@@ -37,11 +37,12 @@ def write_leg(data, kmlFile, ind, name='', style='#yellowLine', skip=1):
     This does not write complete kml files, neither does it open the
     file!
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     data : NX2 instance
         `LAT` and `LON` are taken from this instance.
     kmlFile : file handle
+        file to write data
     ind : index array
         indexed values are written in this leg
     name : string , optional
