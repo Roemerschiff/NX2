@@ -6,63 +6,55 @@ Victoria 2008
 
 Dies sind die Testfahrten der Victoria auf dem Ratzeburger See.
 
+
+.. raw:: html
+
+   <iframe name="geojson" id="geojson" height="420" width="620" frameborder="0"
+   title="Karte der Schiffsfahrt"></iframe>
+
+ 
+
 Bootsbauer
 ------------------------
+.. raw:: html
 
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-| Datum   |   Link in Google maps                                                                                                                                                |  Download kml Datei                                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-|15.4.2008|`Fahrt 1 <http://maps.google.de/maps?hl=de&q=http:%2F%2Froemerschiff.readthedocs.org%2Fen%2Flatest%2F_downloads%2F080415.kml&t=h&amp;z=16>`__                         | :download:`Fahrt 1<kml/080415.kml>`                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-|16.4.2008|`Fahrt 1 <http://maps.google.de/maps?hl=de&q=http:%2F%2Froemerschiff.readthedocs.org%2Fen%2Flatest%2F_downloads%2F080416.kml&t=h&amp;z=16>`__                         | :download:`Fahrt 1<kml/080416.kml>`                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-|17.4.2008|`Fahrt 1 <http://maps.google.de/maps?hl=de&q=http:%2F%2Froemerschiff.readthedocs.org%2Fen%2Flatest%2F_downloads%2F080417.kml&t=h&amp;z=16>`__                         | :download:`Fahrt 1<kml/080417.kml>`                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-|18.4.2008|`Fahrt 1 <http://maps.google.de/maps?hl=de&q=http:%2F%2Froemerschiff.readthedocs.org%2Fen%2Flatest%2F_downloads%2F080418.kml&t=h&amp;z=16>`__                         | :download:`Fahrt 1<kml/080418.kml>`                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
+   <ul>
+   <li>15.4.2008: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080415secondday_nosail.00.csv.geojson" target="geojson"> Fahrt 1</a></li>
+   <li>16.4.2008: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080416thirdday_sail.00.csv.geojson" target="geojson"> Fahrt 1</a></li>
+   <li>17.4.2008: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080417fourthday_sail.00.csv.geojson" target="geojson"> Fahrt 1</a></li>
+   <li>18.4.2008: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080418fifthday_mixed.00.csv.geojson" target="geojson"> Fahrt 1</a></li>
+   </ul>
 
 Studenten Uni Hamburg
 ------------------------
+.. raw:: html
 
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-| Datum   |   Link in Google maps                                                                                                                                                |  Download kml Datei                                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-|19.4.2008|`Fahrt 1 <http://maps.google.de/maps?hl=de&q=http:%2F%2Froemerschiff.readthedocs.org%2Fen%2Flatest%2F_downloads%2F080419.kml&t=h&amp;z=16>`__                         | :download:`Fahrt 1<kml/080419.kml>`                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-|20.4.2008|`Fahrt 1 <http://maps.google.de/maps?hl=de&q=http:%2F%2Froemerschiff.readthedocs.org%2Fen%2Flatest%2F_downloads%2F080420.kml&t=h&amp;z=16>`__                         | :download:`Fahrt 1<kml/080420.kml>`                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-|22.4.2008|`Fahrt 1 <http://maps.google.de/maps?hl=de&q=http:%2F%2Froemerschiff.readthedocs.org%2Fen%2Flatest%2F_downloads%2F080422.kml&t=h&amp;z=16>`__                         | :download:`Fahrt 1<kml/080422.kml>`                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-|23.4.2008|`Fahrt 1 <http://maps.google.de/maps?hl=de&q=http:%2F%2Froemerschiff.readthedocs.org%2Fen%2Flatest%2F_downloads%2F080423.kml&t=h&amp;z=16>`__                         | :download:`Fahrt 1<kml/080423.kml>`                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-|24.4.2008|`Fahrt 1 <http://maps.google.de/maps?hl=de&q=http:%2F%2Froemerschiff.readthedocs.org%2Fen%2Flatest%2F_downloads%2F080424.kml&t=h&amp;z=16>`__                         | :download:`Fahrt 1<kml/080424.kml>`                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-|25.4.2008|`Fahrt 1 <http://maps.google.de/maps?hl=de&q=http:%2F%2Froemerschiff.readthedocs.org%2Fen%2Flatest%2F_downloads%2F080425.kml&t=h&amp;z=16>`__                         | :download:`Fahrt 1<kml/080425.kml>`                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-
+   <ul>
+   <li>19.4.2008: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080419sixthday_sail.00.csv.geojson" target="geojson"> Fahrt 1</a></li>
+   <li>20.4.2008: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080420seventhday_sail.00.csv.geojson" target="geojson"> Fahrt 1</a></li>
+   <li>22.4.2008: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080422ninthday_sail.00.csv.geojson" target="geojson"> Fahrt 1</a> <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080422ninthday2_sail.00.csv.geojson" target="geojson"> Fahrt 2</a></li>
+   <li>23.4.2008: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080423tenthday_sail.00.csv.geojson" target="geojson"> Fahrt 1</a></li>
+   <li>24.4.2008: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080424eleventhday_sail.00.csv.geojson" target="geojson"> Fahrt 1</a></li>
+   <li>25.4.2008: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080425twelfthday_sail.00.csv.geojson" target="geojson"> Fahrt 1</a></li>
+   </ul>
 
 Obladener Kohorte
 ------------------------
+.. raw:: html
 
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-| Datum   |   Link in Google maps                                                                                                                                                |  Download kml Datei                                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-|26.4.2008|`Fahrt 1 <http://maps.google.de/maps?hl=de&q=http:%2F%2Froemerschiff.readthedocs.org%2Fen%2Flatest%2F_downloads%2F080426.kml&t=h&amp;z=16>`__                         | :download:`Fahrt 1<kml/080426.kml>`                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-|27.4.2008|`Fahrt 1 <http://maps.google.de/maps?hl=de&q=http:%2F%2Froemerschiff.readthedocs.org%2Fen%2Flatest%2F_downloads%2F080427.kml&t=h&amp;z=16>`__                         | :download:`Fahrt 1<kml/080427.kml>`                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
+   <ul>
+   <li>15.4.2008: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080426thirteenthday_sail.00.csv.geojson" target="geojson"> Fahrt 1</a></li>
+   <li>15.4.2008: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080427tfourteenthday_sail.00.csv.geojson" target="geojson"> Fahrt 1</a></li>
+   </ul>
 
 Studenten HSU
 ------------------------
 
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-| Datum   |   Link in Google maps                                                                                                                                                |  Download kml Datei                                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-| 3.5.2008|`Fahrt 1 <http://maps.google.de/maps?hl=de&q=http:%2F%2Froemerschiff.readthedocs.org%2Fen%2Flatest%2F_downloads%2F080503.kml&t=h&amp;z=16>`__                         | :download:`Fahrt 1<kml/080503.kml>`                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-| 4.5.2008|`Fahrt 1 <http://maps.google.de/maps?hl=de&q=http:%2F%2Froemerschiff.readthedocs.org%2Fen%2Flatest%2F_downloads%2F080504.kml&t=h&amp;z=16>`__                         | :download:`Fahrt 1<kml/080504.kml>`                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-| 5.5.2008|`Fahrt 1 <http://maps.google.de/maps?hl=de&q=http:%2F%2Froemerschiff.readthedocs.org%2Fen%2Flatest%2F_downloads%2F080505.kml&t=h&amp;z=16>`__                         | :download:`Fahrt 1<kml/080505.kml>`                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
-| 6.5.2008|`Fahrt 1 <http://maps.google.de/maps?hl=de&q=http:%2F%2Froemerschiff.readthedocs.org%2Fen%2Flatest%2F_downloads%2F080506.kml&t=h&amp;z=16>`__                         | :download:`Fahrt 2<kml/080506.kml>`                                     |
-+---------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------+
+.. raw:: html
+
+   <ul>
+   <li>3.5.2008: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080503fifteenthday_sail.00.csv.geojson" target="geojson"> Fahrt 1</a> <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080503fifteenthday2_sail.00.csv.geojson" target="geojson"> Fahrt 2</a></li>
+   <li>4.5.2008: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080504sixteenthday_sail.00.csv.geojson" target="geojson"> Fahrt 1</a> <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080504sixteenthday2_sail.00.csv.geojson" target="geojson"> Fahrt 2</a> <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080504sixteenthday3_sail.00.csv.geojson" target="geojson"> Fahrt 3</a></li>
+   <li>5.5.2008: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080505seventeenthday_sail.00.csv.geojson" target="geojson"> Fahrt 1</a></li>
+   <li>6.4.2008: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080506eigthteenthday_sail.00.csv.geojson" target="geojson"> Fahrt 1</a></li>
+   </ul>
