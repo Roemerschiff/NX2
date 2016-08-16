@@ -5,8 +5,7 @@ Tests in 2012
 
 .. raw:: html
 
-   <iframe name="geojson" id="geojson" height="420" width="620" frameborder="0"
-   title="Karte der Schiffsfahrt" src="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/20120515_second_day_with_mast_rah.00.csv.geojson"></iframe>
+   <iframe name="geojson" id="geojson" height="420" width="620" frameborder="0" title="Karte der Schiffsfahrt" src="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/20120515_second_day_with_mast_rah.00.csv.geojson"></iframe>
 
 
 Studenten Trier
@@ -17,7 +16,7 @@ grosseren Mast dabei.
 .. raw:: html
 
   <ul>
-  <li>15.5.2012: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/20120515_second_day_with_mast_rah.00.csv.geojson" target="geojson"> Fahrt 1</a> <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/20120515_second_day_with_mast_rah2.00.csv.geojson" target="geojson"> Fahrt 2</a><x/li>
+  <li>15.5.2012: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/20120515_second_day_with_mast_rah.00.csv.geojson" target="geojson"> Fahrt 1</a> <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/20120515_second_day_with_mast_rah2.00.csv.geojson" target="geojson"> Fahrt 2</a></li>
    <li>16.5.2012: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/20120516_third_day_with_mast_rah.00.csv.geojson" target="geojson"> Fahrt 1</a></li>
    <li>17.5.2012: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/20120517_fourth_day_with_mast_rah.00.csv.geojson" target="geojson"> Fahrt 1</a></li>
    <li>18.5.2012: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/20120518_fifth_day_with_mast_rah.00.csv.geojson" target="geojson"> Fahrt 1</a> <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/20120517_fourth_day_with_mast_rah2.00.csv.geojson" target="geojson"> Fahrt 2</a></li>
@@ -28,3 +27,9 @@ Tests in Haltern
 ----------------
 Diese Fahrten wurden mit verschiedenen Teams auf der Lusoria und der Victoria gemacht. Beide Teams wurden von Sportwissenschaftlern begleitet, die die Leistungsfähigkeit der Ruderer untersucht haben.
 
+.. raw:: html
+
+   <ul>
+   <li>6.9..2012: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/Testfahrt_06092012.00.csv.geojson" target="geojson"> Fahrt 1</a></li>
+   <li>7.9.2012: <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/Testfahrt_07092012.00.csv.geojson" target="geojson"> Lusoria</a> <a href="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/Testfahrt_07092012b.00.csv.geojson" target="geojson"> Victoria</a></li>
+   </ul>

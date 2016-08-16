@@ -179,10 +179,14 @@ def read_NX2(self, filename, date, corr_bsp=1., origin=None, timeoffset=2, verbo
     self.add_column('x', 2.*np.pi*r_earth*np.cos(
         self.LAT/180.*np.pi)/360.*(self.LON-self.origin[1]))
 
-    self.BSP = self.BSP * corr_bsp
+    # 2012 Haltern data was taken / exported without all sensers available
+    if 'BSP' in self.columns:
+        self.BSP = self.BSP * corr_bsp
 
-    self.TWS = self.TWS / mps2knots
-    self.AWS = self.AWS / mps2knots
+    if 'TWS' in self.columns:
+        self.TWS = self.TWS / mps2knots
+    if 'AWS' in self.columns:
+        self.AWS = self.AWS / mps2knots
 
 
 def sec2hms(sec):

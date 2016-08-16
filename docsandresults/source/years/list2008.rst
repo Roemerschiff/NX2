@@ -9,8 +9,7 @@ Dies sind die Testfahrten der Victoria auf dem Ratzeburger See.
 
 .. raw:: html
 
-   <iframe name="geojson" id="geojson" height="420" width="620" frameborder="0"
-   title="Karte der Schiffsfahrt"></iframe>
+   <iframe name="geojson" id="geojson" height="420" width="620" frameborder="0" src="https://render.githubusercontent.com/view/geojson?url=https://raw.githubusercontent.com/hamogu/NX2/master/docsandresults/source/years/geojson/080415secondday_nosail.00.csv.geojson" title="Karte der Schiffsfahrt"></iframe>
 
  
 
