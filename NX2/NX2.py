@@ -6,6 +6,7 @@ from warnings import warn
 from exceptions import UserWarning
 import json
 
+import pytz
 import numpy as np
 import scipy
 import scipy.interpolate
@@ -26,6 +27,7 @@ mps2knots = 0.51444  # factor to convert m/s to knots
 
 # Module level class and func for kml file support
 
+tzgermany = pytz.timezone("Europe/Berlin")
 
 class OriginError(Exception):
     pass
@@ -211,12 +213,17 @@ class NX2Table(atpy.Table):
 
         Useful for plotting, so matplotlib can label the x-axis correctly.
         '''
-        return np.array(map(datetime.datetime, self.year, self.month, self.day, self.hour, self.minute, self.sec))
+        out = np.array(map(datetime.datetime, self.year, self.month,
+                           self.day, self.hour, self.minute,
+                           self.sec))
+        out_loc = np.array([tzgermany.localize(o) for o in out])
+        return out_loc
 
     def time(self):
         '''Return an np.array of ``datetime.time`` object for each data point
 
         Useful for plotting, so matplotlib can label the x-axis correctly.
+        This returns a "naive" time with no timezone info attached.
         '''
         return np.array(map(datetime.time, self.hour, self.minute, self.sec))
 
@@ -329,7 +336,7 @@ class NX2Table(atpy.Table):
         fig = plt.figure()
         fig.canvas.set_window_title('Bootsgeschwindigkeit')
         ax = fig.add_subplot(111)
-        ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M', tz=None))
+        ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M', tz=tzgermany))
         # plt.subplots_adjust(left=0.075, right=0.95, top=0.9, bottom=0.25)
 
         ind = (self.time() >= datetime.time(*t1)) & (self.time() <= datetime.time(*t2))
@@ -421,6 +428,7 @@ class NX2Table(atpy.Table):
         changes, i.e. the first entry within each minute.
         '''
         return np.hstack((np.array([True]), (self.minute[1:] != self.minute[0:-1])))
+
     def write_geojson(self, filename):
         '''write geojson file from a NX2 object
 
@@ -429,11 +437,11 @@ class NX2Table(atpy.Table):
         filename : string
             file name or path for output
         '''
-        geoj =  { "type": "FeatureCollection", "features": []}
+        geoj = {"type": "FeatureCollection", "features": []}
         for sail, group in itertools.groupby(np.arange(
                     len(self)), lambda k: (self.sailing[k])):
-            leg = { "type": "Feature", "geometry": {"type": "LineString"},
-                    "properties": {}}
+            leg = {"type": "Feature", "geometry": {"type": "LineString"},
+                   "properties": {}}
             if sail == 1:
                 leg['properties']['stroke'] = '#ffff00'
                 leg['properties']['description'] = 'Segel gesetzt'
@@ -459,6 +467,25 @@ class NX2Table(atpy.Table):
         with open(filename, 'w') as f:
             json.dump(geoj, f)
 
+    def write_gpx(self, filename):
+        from lxml import etree as ET
+
+        root = ET.Element("gpx")
+        trk = ET.SubElement(root, "trk")
+        name = ET.SubElement(trk, "name").text = os.path.basename(filename).split('.')[0]
+        lat  = self['LAT']
+        lon = self['LON']
+        t = self.datetime()
+        for i in range(len(self)):
+            trkpt = ET.SubElement(trk, "trkpt",
+                                  lat='{}'.format(lat[i]),
+                                  lon='{}'.format(lon[i]))
+            tmp = ET.SubElement(trkpt, "time").text = t[i].astimezone(pytz.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        tree = ET.ElementTree(root)
+        tree.write(filename, pretty_print=True
+        )
+
     def write_kml(self, filename, verbose=True):
         '''write a kml file from an NX2 object
 
@@ -474,7 +501,7 @@ class NX2Table(atpy.Table):
             kmlFile.write('  <name> Fahrtstrecke {0:2n}.{1:2n}.{2:2n} </name>'.format(
                 *self.read_date))
             kmlFile.write(r'''  <description>Dies stellt die Fahrtstrecke der Galeere am angegebenen Tag dar. Sie sieht eckig aus, weil das GPS nur auf einige Meter genau ist. Ruder und Segelstrecken werden mit unterschiedlichen Farben angezeigt. Jede Strecke kann auf der Karte einzeln an- und ausgeschaltet werden. Bei jeder Strecke ist die Startzeit vermerkt.
-Fragen an: Moritz.guenther@hs.uni-hamburg.de</description>
+Fragen an: moritz.guenther@gmx.de</description>
     <Style id="yellowLine">
       <LineStyle>
         <color>7f00ffff</color>
