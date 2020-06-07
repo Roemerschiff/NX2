@@ -100,7 +100,8 @@ class NX2RowingWarning(UserWarning):
 #   read_NX2: define proper timezone instead of timeoffset
 
 
-def read_NX2(self, filename, date, corr_bsp=1., origin=None, timeoffset=2, verbose=True):
+def read_NX2(self, filename, date, corr_bsp=1., origin=None, timeoffset=2, verbose=True,
+             remove_empty=True):
     '''read in csv data and initialize table
 
     Parameters
@@ -116,6 +117,8 @@ def read_NX2(self, filename, date, corr_bsp=1., origin=None, timeoffset=2, verbo
         default: lat, lon at first datapoint
     timeoffset: float
         hours to be added to convert UT to local
+    remove_empty: bool
+        Remove empty columns?
     '''
     include_names = ['TIME', 'LAT', 'LON', 'AWA', 'AWS',
                      'BSP', 'COG', 'DFT', 'HDC', 'SET', 'SOG', 'TWA', 'TWS']
@@ -149,7 +152,7 @@ def read_NX2(self, filename, date, corr_bsp=1., origin=None, timeoffset=2, verbo
         valid = np.isfinite(self[name])
         if valid.all():
             pass
-        elif (~valid).all():
+        elif (~valid).all() and remove_empty:
             self.remove_columns(name)
         elif (np.sum(valid, dtype=np.float) / len(valid)) >= 0.98:
             self.fill_nans(name)
@@ -287,7 +290,7 @@ class NX2Table(atpy.Table):
         smoothed = math.smooth_gauss(self.BSP, 3.)
         con3 = (abs(np.diff(smoothed)) < 0.01)  # careful! n-1 elements!
         myl = con3.tolist()
-        myl.append([True])
+        myl.append(True)
         con3 = np.array(myl)
         con = con1 & con2 & con3
         linear = scipy.odr.Model(line)
