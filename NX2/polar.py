@@ -94,7 +94,7 @@ def near_const(arr, max_diff=0.01):
     '''
     con = abs(np.diff(arr)) < max_diff
     myl = con.tolist()
-    myl.append([con[-1]])
+    myl.append(con[-1])
     return np.array(myl)
 
 
