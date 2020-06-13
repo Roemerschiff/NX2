@@ -10,10 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.transforms import Affine2D
 from mpl_toolkits.axisartist import floating_axes
-from mpl_toolkits.axisartist import angle_helper
 from matplotlib.projections import PolarAxes
-from mpl_toolkits.axisartist.grid_finder import FixedLocator, MaxNLocator, \
-    DictFormatter
+from mpl_toolkits.axisartist.grid_finder import MaxNLocator
 
 from . import math
 
@@ -237,3 +235,40 @@ def plot_half_circle(ax, theta, r, **kwargs):
     extended_theta = np.hstack([0, theta, 180.])
     extended_r = np.hstack([r[0], r, r[-1]])
     temp = ax.plot(extended_theta, extended_r, **kwargs)
+
+
+def my_polar(data, drift=False, rawTWA=False, fct=np.median,
+             anglebins=np.arange(0, 181., 15.01),
+             speedbins=np.arange(1., 16., 3.)):
+    '''Group data into arrays for polar diagrams with default settings
+
+    Parameters
+    ----------
+    data : NX2 data table
+    drift : bool
+        If true, return drift angle instead of BSP
+    rawTWA : bool
+        Usually, the grouping is done by the drift corrected TWA,
+        i.e. the direction the ship actually moves in.
+        If True, the uncorrected TWA is used.
+    fct : function
+        see documentation of NX2.polar.group
+    '''
+    con = near_const(math.smooth_gauss(data['BSP'], 10), max_diff=0.007)
+    TWSs = math.smooth_expdec(data['TWS'], 10)
+    TWAs = math.smooth_expdec(np.abs(data['TWA']), 10)
+    conTWA = near_const(TWAs, max_diff=1.5)
+    TWAsdrift = np.abs(TWAs) + np.abs(math.bearingdiff180(data.HDC, data.COG))
+    ind = con & conTWA & sail(data)
+    if not drift:
+        if rawTWA:
+            return group(TWAs[ind], TWSs[ind], data['BSP'][ind], speedbins,
+                         anglebins, fct=fct)
+        else:
+            return group(TWAsdrift[ind], TWSs[ind], data['BSP'][ind],
+                         speedbins, anglebins, fct=fct)
+    else:
+        DFT = np.abs(math.bearingdiff180(data['HDC'], data['COG']))
+        DFTs = math.smooth_expdec(DFT, 10)
+        return group(TWAs[ind], TWSs[ind], DFTs[ind], speedbins,
+                     anglebins, fct=fct)
