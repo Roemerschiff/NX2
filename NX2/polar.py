@@ -135,7 +135,9 @@ def group(angle, wind, bsp, speedbins, anglebins, fct=np.median):
     return polar
 
 
-def plot(ax, polardata, speedbins, anglebins, color=['r', 'g', 'b', 'y', 'k', 'c', 'orange']):
+def plot(ax, polardata, speedbins, anglebins,
+         color=['r', 'g', 'b', 'y', 'k', 'c', 'orange'],
+         padded=True):
     '''Make a polar plot and label it for data in bins.
 
     Parameters
@@ -151,10 +153,13 @@ def plot(ax, polardata, speedbins, anglebins, color=['r', 'g', 'b', 'y', 'k', 'c
         Make sure that 180. is included in last bin and not on the boundary.
     color : array
         matplotlib colors used for plotting the line in the diagram
-
+    padded : bool
+        If true, polardata starts with row for data below lowest speed bin
+        (as output by np.digitize).
     '''
+    start = 1 is padded else 0
     for i in np.arange(1, len(speedbins)):
-        plot_half_circle(ax, anglebins[0:-1]+np.diff(anglebins)/2., polardata[i, 1:],
+        plot_half_circle(ax, anglebins[0:-1]+np.diff(anglebins)/2., polardata[i, start:],
                          color=color[i], lw=3,
                          label='{0:3.1f}-{1:3.1f} kn'.format(speedbins[i-1], speedbins[i]))
     temp = ax.legend(loc='upper right')
@@ -272,3 +277,65 @@ def my_polar(data, drift=False, rawTWA=False, fct=np.median,
         DFTs = math.smooth_expdec(DFT, 10)
         return group(TWAs[ind], TWSs[ind], DFTs[ind], speedbins,
                      anglebins, fct=fct)
+
+csv_header = '''
+# {}
+#
+# Unit: All speeds are in knots (Nautical mile / hour).
+#       All angles are in degrees, 0 deg is into the wind and 180 deg is running downwind.
+# Format:
+# 2 D histrogram of averaged boat speeds
+# The first two columns contain the lower and upper bin edge of each bin for
+# the wind speed, the first two rows the lower and upper bin edge for the
+# wind direction.
+#
+# Example:
+# Look at the following table:
+# nan nan 80
+# nan nan 100
+# 1 3 1.2
+#
+# This would mean that for wind speeds between 1 and 3 kn and beam reach
+# (angle between 80 and 100 degrees) the boat made an average 1.2 kn.
+'''
+
+def write_polar_csv(filename, data, speedbins, anglebins, title='Polar diagram', **kwargs):
+    '''Write a polar diagram to a CSV file
+
+    Parameters
+    ----------
+    filename : string
+        filename
+    data : np.array of space (N, M)
+        data as 2D array
+    speedbins : np.array
+        Bis edges for speed histrogram
+    anglebins:
+        Bin edges for angles. Last bin should be inclusese of 180. deg
+    title : string
+    '''
+    myp = my_polar(data, speedbins=speedbins, anglebins=anglebins, **kwargs)
+    with open(filename, 'w') as f:
+        f.write(csv_header.format(title))
+        f.write('  nan   nan ' + ' '.join(['{:5.1f}'.format(a) for a in anglebins[:-1]]) + '\n')
+        f.write('  nan   nan ' + ' '.join(['{:5.1f}'.format(a) for a in anglebins[1:]]) + '\n')
+        for i in range(1, len(speedbins)):
+            line = '{:5.2f} {:5.2f}'.format(speedbins[i - 1], speedbins[i])
+            for j in range(1, len(anglebins)):
+                line = line + ' {:5.2f}'.format(myp[i, j])
+            f.write(line + '\n')
+
+
+def read_polar_csv(filename):
+    dat = np.loadtxt(filename)
+    if not np.all(dat[0, 3:] == dat[1, 2:-1]):
+        raise ValueError('Angle binning is non-continuous.')
+    if not np.all(dat[3:, 0] == dat[2:-1, 1]):
+        raise ValueError('TWS binning is non-continuous.')
+    anglebins = np.zeros(dat.shape[1] - 1)
+    speedbins = np.zeros(dat.shape[0] - 1)
+    anglebins[:-1] = dat[0, 2:]
+    anglebins[-1] = dat[1, -1]
+    speedbins[:-1] = dat[2:, 0]
+    speedbins[-1] = dat[-1, 1]
+    return dat[2:, 2:], speedbins, anglebins
