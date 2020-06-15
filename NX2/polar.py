@@ -157,7 +157,7 @@ def plot(ax, polardata, speedbins, anglebins,
         If true, polardata starts with row for data below lowest speed bin
         (as output by np.digitize).
     '''
-    start = 1 is padded else 0
+    start = 1 if padded else 0
     for i in np.arange(1, len(speedbins)):
         plot_half_circle(ax, anglebins[0:-1]+np.diff(anglebins)/2., polardata[i, start:],
                          color=color[i], lw=3,
