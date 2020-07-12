@@ -83,52 +83,84 @@ def add_rowing_old_format(df, filename):
     return newdf
 
 
-def bearingdiff180(a, b):
-    '''Calculate the smallest difference between two bearings.
+def add_sailing_format(df, filename):
+    sailing = pd.read_csv(filename,
+                          parse_dates=[['date', 'setzen'], ['date', 'hoch']])
+    for c in ['setzen', 'hoch']:
+        sailing[c] = pd.to_datetime(sailing[f'date_{c}'],
+                                    format='%Y:%m:%d %H:%M:%S')
+        sailing[c] = sailing[c].dt.tz_localize(tz='Europe/Berlin')
+    for row in sailing.iterrows():
+        try:
+            df.loc[row[1]['setzen']: row[1]['hoch'], 'Segel'] = 1
+            df.loc[row[1]['setzen']: row[1]['hoch'], 'Ruderschlaege/Minute'] = row[1]['riemen'] * 20
+        except KeyError:
+            # This row has a time not covered in df
+            pass
+    return df
 
-    There are two complications here compared to the usual ``a-b``:
 
-        - The angle wraps around at 360 deg.
-        - A-priory it's not clear if the shortest difference between two
-          bearings is clockwise or anti-clockwise.
+supporting_data = {'Ruderschlaege.csv': add_rowing_old_format,
+                   'sailing.csv': add_sailing_format,
+                   }
+
+
+def wrap_pi(x):
+    '''Wrap angle in range [-180, 180]
 
     Parameters
     ----------
-    a, b: np.float
-        angles in degrees
+    x: np.array
+        angle in degrees
 
     Returns
     -------
     out : float
-        smallest difference between ``a`` and ``b`` in the range [-180,180]
+        angle in the range [-180,180]
     '''
-    return np.mod((b - a) + 180. + 360., 360.) - 180.
+    return x - 360 * np.floor((x + 180) / 360)
 
 
-def default_and_smooth(df, columns=['BSP', 'TWS', 'absTWA', 'bearingdiff'],
+def default_and_smooth(df, columns=['BSP', 'TWA', 'TWS', 'absTWA',
+                                    'bearingdiff',
+                                    'TWA_drift', 'absTWA_drift'],
                        rollingtime=240,
                        **kwargs):
     '''Calculate some default derived and smoothed columns'''
-    df['absTWA'] = np.abs(df['TWA'])
+    # Useful derived columns
+    if 'TWA' in df.columns:
+        df['absTWA'] = np.abs(df['TWA'])
     if ('HDC' in df.columns) and ('COG' in df.columns):
-        df['bearingdiff'] = np.abs(bearingdiff180(df['HDC'], df['COG']))
+        df['bearingdiff'] = wrap_pi(-(df['HDC'] - df['COG']))
+        df['absbearingdiff'] = np.abs(df['bearingdiff'])
+    if ('TWA' in df.columns) and ('bearingdiff' in df.columns):
+        df['TWA_drift'] = wrap_pi(df['TWA'] - df['bearingdiff'])
+        df['absTWA_drift'] = np.abs(df['TWA_drift'])
+    if ('TWA' in df.columns) and ('HDC' in df.columns):
+        # + 180, because TWA is measured "towards" the ship, e.g.
+        # HDC = 0 and TWA = 0 means wind coming from N and
+        # *pointing* south.
+        df['windang'] = np.mod(df['HDC'] + df['TWA'] + 180., 360.)
+
+    # Smoothing for existing columns
     for c in columns:
-        df[c + '_s'] = df[c].ewm(**kwargs).mean()
+        if c in df.columns:
+            df[c + '_s'] = df[c].ewm(**kwargs).mean()
+
     if 'Segel' in df.columns:
         df['Segel_s'] = df['Segel'].rolling(rollingtime, center=True).mean()
-        # Pandas has only experimental support for masks, but deals with nan well.
+        # Pandas has only experimental support for masks, but deals well with nan.
+        # For plotting purposes we make x/y columns with nan when the sail was not up.
         df['x_Segel_masked'] = df['x']
         df.loc[df['Segel'] != 1, 'x_Segel_masked'] = np.nan
+        df['y_Segel_masked'] = df['y']
+        df.loc[df['Segel'] != 1, 'y_Segel_masked'] = np.nan
     if 'Ruderschlaege/Minute' in df.columns:
         df['row_s'] = df['Ruderschlaege/Minute'].rolling(rollingtime,
                                                          center=True).mean()
-    if ('bearingdiff' in df.columns) and ('absTWA_s' in df.columns):
-        df['absTWA_drift_s'] = df['absTWA_s'] + df['bearingdiff']
-    if ('TWA' in df.columns) and ('HDC' in df.columns):
-        df['windang'] = df['TWA'] + df['HDC'] + 180.
 
 
-def read_NX2(filename, corr_bsp=1, origin=None, timeoffset=2):
+def read_NX2(filename, corr_bsp=1, origin=None):
     '''read in csv data and initialize table
 
     Parameters
@@ -140,8 +172,6 @@ def read_NX2(filename, corr_bsp=1, origin=None, timeoffset=2):
     origin: tuple
         (lat, lon) in deg of x,y origin
         default: lat, lon at first datapoint
-    timeoffset: float
-        hours to be added to convert UT to local
     '''
     df = pd.read_csv(filename)
     df.dropna(axis='columns', how='all', inplace=True)
@@ -157,9 +187,9 @@ def read_NX2(filename, corr_bsp=1, origin=None, timeoffset=2):
         if col in df.columns:
             df[col] = df[col] / mps2knots
     df.interpolate(columns='TIME')
-    df['time'] = pd.Timestamp(**date_from_filename(filename), tz='Europe/Berlin')
-    df['time'] = df['time'] + pd.to_timedelta(df['TIME'] + timeoffset * 3600,
-                                              unit='S')
+    df['time'] = pd.Timestamp(**date_from_filename(filename), tz='UTC')
+    df['time'] = df['time'] + pd.to_timedelta(df['TIME'], unit='S')
+    df['time'] = df['time'].dt.tz_convert('Europe/Berlin')
     df.set_index('time', inplace=True, drop=False)
     df.drop(['TIME'], axis=1)
 
@@ -167,10 +197,12 @@ def read_NX2(filename, corr_bsp=1, origin=None, timeoffset=2):
         (np.abs(df.attrs['origin'][1] - 12.0285) < 0.0001)):
             remove_danube_current(df)
 
-    rowsailfile = os.path.join(os.path.dirname(filename), 'Ruderschlaege.csv')
-    if os.path.exists(rowsailfile):
-        df = add_rowing_old_format(df, rowsailfile)
-        df.set_index('time', inplace=True, drop=False)
+    for filen, reader in supporting_data.items():
+        f = os.path.join(os.path.dirname(filename), filen)
+        if os.path.exists(f):
+            df = reader(df, f)
+            df.set_index('time', inplace=True, drop=False)
+            break
 
     if 'BSP' in df.columns:
         df['BSP'] *= corr_bsp
