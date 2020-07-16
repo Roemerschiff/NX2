@@ -15,51 +15,32 @@ def _str2interval(s):
     return pd.Interval(float(val1), float(val2))
 
 
-def read_polar_csv(filename):
+def read_polar_csv(filename, col='BSP'):
     out = pd.read_csv(filename,
                       converters={'ang_bin': _str2interval,
                                   'v_bin': _str2interval})
-    return out.pivot(index='ang_bin', columns='v_bin', values='BSP')
+    out.index = pd.MultiIndex.from_arrays([pd.Categorical(out['ang_bin']),
+                                           pd.Categorical(out['v_bin'])],
+                                          names=['ang_bin', 'v_bin'])
+    return out.drop(columns=['ang_bin', 'v_bin'])[col].unstack()
 
 
-# Note: Use geojson package instead?
-def write_geojson(self, filename):
-    '''write geojson file from a NX2 object
+def geojson(df, color={0: '#55AAFF', 1: '#00F', -1: '#F00'},
+            descr={0: 'kein Segel', 1: 'Segel gesetzt', -1: 'Mastbruch'}):
 
-    Parameters
-    ----------
-    filename : string
-        file name or path for output
-    '''
     geoj = {"type": "FeatureCollection", "features": []}
-    for sail, group in itertools.groupby(np.arange(
-            len(self)), lambda k: (self.sailing[k])):
+    df = df.drop_duplicates(subset=['LAT', 'LON'])
+    for name, grouped in df.groupby(df['Segel'].diff().abs().cumsum()):
         leg = {"type": "Feature", "geometry": {"type": "LineString"},
                "properties": {}}
-        if sail == 1:
-            leg['properties']['stroke'] = '#ffff00'
-            leg['properties']['description'] = 'Segel gesetzt'
-        elif sail == 0:
-            leg['properties']['description'] = 'kein Segel'
-            leg['properties']['stroke'] = '#ff0000'
-        elif sail == -1:
-            leg['properties']['description'] = 'Mastbruch'
-            leg['properties']['stroke'] = '#00ff00'
-        ind = [g for g in group]
-        pos = np.vstack([self['LON'][ind], self['LAT'][ind]])
-        # Remove dublicate entries, like those on mooring.
-        ind = [0]
-        for i in range(1, pos.shape[1]):
-            if np.any(pos[:, i] != pos[:, i - 1]):
-                ind.append(i)
-        pos = pos[:, ind]
-
-        leg['geometry']["coordinates"] = pos.T.tolist()
+        leg['properties']['description'] = descr[grouped['Segel'].median()]
+        leg['properties']['stroke'] = color[grouped['Segel'].median()]
+        leg['geometry']["coordinates"] = list(zip(grouped['LON'],
+                                                  grouped['LAT']))
+        leg['properties']['times'] = list(grouped.index.strftime('%Y-%m-%dT%H:%M:%S'))
 
         geoj['features'].append(leg)
-
-    with open(filename, 'w') as f:
-        json.dump(geoj, f)
+    return geoj
 
 
 # Note: Use gpxpy package instead?

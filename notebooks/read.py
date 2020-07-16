@@ -121,12 +121,12 @@ def wrap_pi(x):
     return x - 360 * np.floor((x + 180) / 360)
 
 
-def default_and_smooth(df, columns=['BSP', 'TWA', 'TWS', 'absTWA',
+def default_and_smooth(df, columns=['TWA', 'TWS', 'absTWA',
                                     'bearingdiff',
                                     'TWA_drift', 'absTWA_drift'],
                        rollingtime=240,
                        **kwargs):
-    '''Calculate some default derived and smoothed columns'''
+    '''Calculate some default derived values and smoothed columns'''
     # Useful derived columns
     if 'TWA' in df.columns:
         df['absTWA'] = np.abs(df['TWA'])
@@ -202,6 +202,12 @@ def read_NX2(filename, corr_bsp=1, origin=None):
         if os.path.exists(f):
             df = reader(df, f)
             df.set_index('time', inplace=True, drop=False)
+            # Replace nan with 0
+            # nan is default value, but if we read sailing data
+            # that means that the data net set to a number
+            # means no sailing happend
+            if 'Segel' in df.columns:
+                df.loc[np.isnan(df['Segel']), 'Segel'] = 0
             break
 
     if 'BSP' in df.columns:

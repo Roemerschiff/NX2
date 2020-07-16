@@ -2,37 +2,41 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from write import geojson
+
 
 def course(df, scale=5, n=300, keyscale=1, **kwargs):
     ax = df.plot('x', 'y', legend=False, color='#55AAFF', label='kein Segel',
                  **kwargs)
-    df.plot('x_Segel_masked', 'y', color='b', lw=3, ax=ax, label='Segel')
+    if {'x_Segel_masked', 'y_Segel_masked'} < set(df.columns):
+        df.plot('x_Segel_masked', 'y_Segel_masked', color='b', lw=3, ax=ax,
+                label='Segel')
     ax.legend(loc='lower left')
 
     # vectors
     dn = df.loc[::n]
-
-    quiver_wind = ax.quiver(dn['x'], dn['y'],
-                            dn['TWS'] * np.sin(np.deg2rad(dn['windang'])),
-                            dn['TWS'] * np.cos(np.deg2rad(dn['windang'])),
-                            scale=scale, scale_units='inches')
-    quiver_bsp = ax.quiver(dn['x'], dn['y'],
-                           dn['BSP'] * np.sin(np.deg2rad(dn['HDC'])),
-                           dn['BSP'] * np.cos(np.deg2rad(dn['HDC'])),
-                           scale=scale, scale_units='inches',
-                           color='g')
-    quiver_sog = ax.quiver(dn['x'], dn['y'],
-                           dn['SOG'] * np.sin(np.deg2rad(dn['COG'])),
-                           dn['SOG'] * np.cos(np.deg2rad(dn['COG'])),
-                           scale=scale, scale_units='inches',
-                           color='salmon')
-
-    qk_wind = ax.quiverkey(quiver_wind, .1, 0.95, keyscale,
-                           'Wind', labelpos='E')
-    qk_bsp = ax.quiverkey(quiver_bsp, .1, 0.9, keyscale,
-                          'Fahrt durchs Wasser (ohne Drift)', labelpos='E')
-    qk_sog = ax.quiverkey(quiver_sog, .1, 0.85, keyscale,
-                          'Fahrt über Grund', labelpos='E')
+    if {'TWS', 'windang'} < set(dn.columns):
+        quiver_wind = ax.quiver(dn['x'], dn['y'],
+                                dn['TWS'] * np.sin(np.deg2rad(dn['windang'])),
+                                dn['TWS'] * np.cos(np.deg2rad(dn['windang'])),
+                                scale=scale, scale_units='inches')
+        ax.quiverkey(quiver_wind, .1, 0.95, keyscale, 'Wind', labelpos='E')
+    if {'BSP', 'HDC'} < set(dn.columns):
+        quiver_bsp = ax.quiver(dn['x'], dn['y'],
+                               dn['BSP'] * np.sin(np.deg2rad(dn['HDC'])),
+                               dn['BSP'] * np.cos(np.deg2rad(dn['HDC'])),
+                               scale=scale, scale_units='inches',
+                               color='g')
+        ax.quiverkey(quiver_bsp, .1, 0.9, keyscale,
+                     'Fahrt durchs Wasser (ohne Drift)', labelpos='E')
+    if {'SOG', 'COG'} < set(dn.columns):
+        quiver_sog = ax.quiver(dn['x'], dn['y'],
+                               dn['SOG'] * np.sin(np.deg2rad(dn['COG'])),
+                               dn['SOG'] * np.cos(np.deg2rad(dn['COG'])),
+                               scale=scale, scale_units='inches',
+                               color='salmon')
+        ax.quiverkey(quiver_sog, .1, 0.85, keyscale,
+                     'Fahrt über Grund', labelpos='E')
     ax.set_xlabel('West - Ost [Meter]')
     ax.set_ylabel('Süd - Nord [Meter]')
     ax.set_aspect('equal')
@@ -62,7 +66,8 @@ def speeds(df, **kwargs):
 def fit_BSP(df, plot=True, **kwargs):
     con1 = df['BSP'] > 0  # moving
     con2 = np.abs(df['COG'] - df['HDC']) < 15.
-    con3 = np.abs(df['BSP_s'].diff()) < 0.01
+    con3 = np.abs(df['BSP'].diff().rolling(10, center=True,
+                                           win_type='triang').mean())
     ind = con1 & con2 & con3
 
     x = df.loc[ind]['SOG']
@@ -90,11 +95,14 @@ def fit_BSP(df, plot=True, **kwargs):
 def make_polar(df, anglebins=np.arange(0, 181., 15.01),
                speedbins=np.arange(1., 16., 3.),
                anglecol='absTWA_drift_s', speedcol='TWS_s'):
+    df = df.copy()
     df['ang_bin'] = pd.cut(df[anglecol], anglebins)
     df['v_bin'] = pd.cut(df[speedcol], speedbins)
-    dp = df.loc[(df['Segel'] == 1) &
-                (df['row_s'] < 0.1) &
-                (np.abs(df['BSP_s'].diff()) < 0.007) &
+    df['BSP_diff_s'] = np.abs(df['BSP'].diff().rolling(20, center=True,
+                                                       win_type='triang').mean())
+    dp = df.loc[(df['Segel'] > 0.7) &
+                (df['row_s'] < 0.01) &
+                (df['BSP_diff_s'] < 0.02) &
                 (np.abs(df['absTWA_s'].diff()) < 1.)]
     polar = dp.groupby(['ang_bin', 'v_bin'])
     return polar, dp
@@ -117,8 +125,34 @@ def polar(polard, ax=None, labeltext='{:2.0f}-{:2.0f} kn', look='smooth',
         ax.plot(np.deg2rad(ang), r, label=labeltext.format(label.left,
                                                            label.right),
                 **kwargs)
-    ax.set_thetamin(0)
-    ax.set_thetamax(180)
+    # 180 - 0 instead of 0-180 makes the same plots, but the r labels are
+    # where I want them
+    ax.set_thetamin(180)
+    ax.set_thetamax(0)
     ax.set_theta_zero_location('N')
     ax.set_xticks(np.deg2rad(range(0, 181, 45)))
     return ax
+
+
+def folium_map(df, color={0: '#55AAFF', 1: '#00F'},
+               tformat='%a %d.%-m.%Y %-H:%M', timestamped=True):
+    import folium
+    import folium.plugins
+
+    m = folium.Map(location=(df['LAT'].mean(), df['LON'].mean()),
+                   control_scale=True, zoom_start=14)
+    df = df.drop_duplicates(subset=['LAT', 'LON'])
+    for name, grouped in df.groupby(df['Segel'].diff().abs().cumsum()):
+        coords = list(zip(grouped['LAT'], grouped['LON']))
+        folium.PolyLine(coords, popup=None,
+                        tooltip=grouped.index[0].strftime(tformat) + ' to ' + \
+                                grouped.index[-1].strftime(tformat),
+                        color=color[grouped['Segel'].median()]).add_to(m)
+    if timestamped:
+        geoj = geojson(df)
+        timelayer = folium.plugins.TimestampedGeoJson(geoj,
+                                                      period='PT30S',
+                                                      duration='PT1M')
+        m.add_child(timelayer)
+
+    return m
