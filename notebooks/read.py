@@ -11,6 +11,8 @@ from scipy.interpolate import NearestNDInterpolator
 r_earth = 6300e3
 mps2knots = 0.51444  # factor to convert m/s to knots
 
+unused_cols = ['CMG', 'DMG', 'LOG', 'RDR', 'TEMP', 'VAR', 'VMG', 'GWD', 'AI01', 'AI02', 'AI03', 'AI04', 'AI05', 'AI06', 'DFT','SET']
+'Columns in NX2 files that are not used, so can they be dropped for simplicity'
 
 def date_from_filename(filename):
     f = os.path.basename(filename)
@@ -214,4 +216,6 @@ def read_NX2(filename, corr_bsp=1, origin=None):
         df['BSP'] *= corr_bsp
 
     default_and_smooth(df, halflife=10)
+    df.drop(columns=unused_cols, inplace=True, errors='ignore')
+
     return df

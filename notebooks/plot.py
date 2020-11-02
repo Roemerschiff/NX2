@@ -53,7 +53,7 @@ def speeds(df, **kwargs):
                 tl.set_color('g')
     if 'Segel' in df.columns:
         axt.fill_between(df['time'], -50, 50, where=df['Segel'] == 1,
-                         color='0.5', alpha='.4', zorder=0, label='Segel')
+                         color='0.5', alpha=.4, zorder=0, label='Segel')
     if 'Ruderschlaege/Minute' in df.columns:
         axt.fill_between(df['time'], df['Ruderschlaege/Minute'],
                          alpha=0.4, color='g',
